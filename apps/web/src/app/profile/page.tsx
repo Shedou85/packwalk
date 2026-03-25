@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { signOut } from "@/app/auth/actions";
+import { appNavItems } from "@/components/navigation/app-nav-items";
 import { MobileBottomNav } from "@/components/navigation/mobile-bottom-nav";
 import { ProfileFactGrid } from "@/components/profile/profile-fact-grid";
 import { ProfileShortcutCard } from "@/components/profile/profile-shortcut-card";
@@ -198,8 +199,8 @@ export default async function ProfilePage() {
                 <ButtonLink href="/dashboard" className="w-full px-4 py-3 text-center">
                   View dogs
                 </ButtonLink>
-                <ButtonLink href="/" className="w-full px-4 py-3 text-center">
-                  Back home
+                <ButtonLink href="/map" className="w-full px-4 py-3 text-center">
+                  Open map
                 </ButtonLink>
               </div>
             }
@@ -207,13 +208,7 @@ export default async function ProfilePage() {
         </div>
       </section>
 
-      <MobileBottomNav
-        items={[
-          { href: "/", label: "Home", icon: "home" },
-          { href: "/dashboard", label: "Walk", icon: "walk" },
-          { href: "/profile", label: "Profile", icon: "profile" },
-        ]}
-      />
+      <MobileBottomNav items={appNavItems} />
     </main>
   );
 }

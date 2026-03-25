@@ -1,3 +1,4 @@
+@import "mapbox-gl/dist/mapbox-gl.css";
 @import "tailwindcss";
 
 :root {
@@ -68,4 +69,13 @@ body::selection {
   box-shadow:
     0 24px 56px rgba(50, 83, 116, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+.mapboxgl-map {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.mapboxgl-ctrl-bottom-left,
+.mapboxgl-ctrl-bottom-right {
+  bottom: 10px;
 }

@@ -8,7 +8,7 @@ import { cn } from "@/lib/cn";
 type MobileBottomNavItem = {
   href: string;
   label: string;
-  icon: "home" | "walk" | "profile";
+  icon: "home" | "map" | "walk" | "profile";
 };
 
 type MobileBottomNavProps = {
@@ -26,7 +26,10 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
         aria-label="Mobile navigation"
         className="rounded-[26px] border border-[rgba(93,130,166,0.26)] bg-[rgba(225,238,250,0.82)] px-3 py-2 shadow-[0_24px_50px_rgba(40,67,95,0.24),inset_0_1px_0_rgba(255,255,255,0.5)] backdrop-blur-[22px]"
       >
-        <ul className="grid grid-cols-3 gap-2">
+        <ul
+          className="grid gap-2"
+          style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
+        >
           {items.map((item) => {
             const active =
               item.href === "/"
@@ -102,6 +105,34 @@ function NavIcon({ icon }: { icon: MobileBottomNavItem["icon"] }) {
         />
         <path
           d="M5 20C5.7 17.67 7.78 16 10.25 16H13.75C16.22 16 18.3 17.67 19 20"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+
+  if (icon === "map") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" className={iconClasses} aria-hidden="true">
+        <path
+          d="M9 5L15 3L20 5V19L15 17L9 19L4 17V5L9 7V19"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M15 3V17"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M9 7V19"
           stroke="currentColor"
           strokeWidth="1.8"
           strokeLinecap="round"

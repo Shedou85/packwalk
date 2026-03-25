@@ -8,6 +8,7 @@ import {
 } from "@/app/dashboard/actions";
 import { DashboardActionTile } from "@/components/dashboard/dashboard-action-tile";
 import { DashboardStatChip } from "@/components/dashboard/dashboard-stat-chip";
+import { appNavItems } from "@/components/navigation/app-nav-items";
 import { MobileBottomNav } from "@/components/navigation/mobile-bottom-nav";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { CompactSelect } from "@/components/ui/compact-select";
@@ -165,7 +166,18 @@ export default async function DashboardPage({
           </SurfaceCard>
         )}
 
-        <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-2 xl:grid-cols-4">
+          <DashboardActionTile
+            eyebrow="Map"
+            title="Open live map"
+            description="Check your map surface, live presence state, and the next layer of nearby discovery."
+            action={
+              <ButtonLink href="/map" className="w-full px-4 py-3 text-center">
+                Open map
+              </ButtonLink>
+            }
+          />
+
           <DashboardActionTile
             eyebrow="Live"
             title={activeWalk ? "Your walk is already live" : "Start a live walk"}
@@ -495,13 +507,7 @@ export default async function DashboardPage({
         </div>
       </section>
 
-      <MobileBottomNav
-        items={[
-          { href: "/", label: "Home", icon: "home" },
-          { href: "/dashboard", label: "Walk", icon: "walk" },
-          { href: "/profile", label: "Profile", icon: "profile" },
-        ]}
-      />
+      <MobileBottomNav items={appNavItems} />
     </main>
   );
 }
