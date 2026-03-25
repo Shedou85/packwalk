@@ -40,12 +40,18 @@ export default async function Home() {
           </div>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <button className="rounded-full bg-slate-950 px-5 py-3 text-sm font-medium text-white transition-transform hover:-translate-y-0.5">
-              Start building auth
-            </button>
-            <button className="rounded-full border border-slate-200 bg-white/75 px-5 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-white">
-              Review schema
-            </button>
+            <a
+              href={user ? "/dashboard" : "/sign-up"}
+              className="rounded-full bg-slate-950 px-5 py-3 text-sm font-medium text-white transition-transform hover:-translate-y-0.5"
+            >
+              {user ? "Open dashboard" : "Create account"}
+            </a>
+            <a
+              href={user ? "/dashboard" : "/sign-in"}
+              className="rounded-full border border-slate-200 bg-white/75 px-5 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-white"
+            >
+              {user ? "View session" : "Sign in"}
+            </a>
           </div>
 
           <div className="mt-10 grid gap-4 sm:grid-cols-3">
