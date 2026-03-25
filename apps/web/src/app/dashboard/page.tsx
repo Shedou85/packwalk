@@ -6,9 +6,13 @@ import {
   endWalkSession,
   startWalkSession,
 } from "@/app/dashboard/actions";
+import { DashboardActionTile } from "@/components/dashboard/dashboard-action-tile";
+import { DashboardStatChip } from "@/components/dashboard/dashboard-stat-chip";
 import { Button, ButtonLink } from "@/components/ui/button";
-import { Field, SelectInput, TextInput } from "@/components/ui/field";
+import { CompactSelect } from "@/components/ui/compact-select";
+import { Field, TextInput } from "@/components/ui/field";
 import { Notice } from "@/components/ui/notice";
+import { Pill } from "@/components/ui/pill";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { ensureProfile } from "@/lib/supabase/profiles";
 import { createClient } from "@/lib/supabase/server";
@@ -57,100 +61,153 @@ export default async function DashboardPage({
     .eq("status", "active")
     .maybeSingle();
 
-  const profileFacts = [
-    {
-      label: "Email",
-      value: user.email ?? "No email",
-    },
-    {
-      label: "Username",
-      value: profile?.username ?? "Not set yet",
-    },
-    {
-      label: "Default visibility",
-      value: profile?.default_visibility ?? "followers",
-    },
-    {
-      label: "Location precision",
-      value: profile?.default_location_precision ?? "approximate",
-    },
-  ];
+  const dogList = dogs ?? [];
+  const dogsCount = dogs?.length ?? 0;
+  const welcomeName = profile?.display_name ?? user.email ?? "walker";
+  const cityLabel = profile?.city ?? "City not set";
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 py-4 sm:px-6 sm:py-6">
       <SurfaceCard
         strong
-        className="flex flex-col gap-4 rounded-[28px] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6"
+        className="overflow-hidden rounded-[28px] px-4 py-5 sm:px-6 sm:py-6"
       >
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--accent-strong)]">
-            PackWalk dashboard
-          </p>
-          <h1 className="mt-2 text-2xl font-semibold text-[var(--text-strong)] sm:text-3xl">
-            Welcome, {profile?.display_name ?? user.email ?? "walker"}.
-          </h1>
-        </div>
+        <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--accent-strong)]">
+              PackWalk dashboard
+            </p>
+            <h1 className="mt-3 text-2xl font-semibold text-[var(--text-strong)] sm:text-3xl">
+              Ready to head out, {welcomeName}.
+            </h1>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--text-body)]">
+              Keep the most important outdoor actions close: go live, manage your
+              dogs, and jump back into profile settings without digging through
+              setup-heavy screens.
+            </p>
 
-        <div className="flex flex-wrap gap-3 sm:flex-nowrap">
-          <ButtonLink href="/" className="px-4 py-2">
-            Home
-          </ButtonLink>
-          <form action={signOut}>
-            <Button className="px-4 py-2">Sign out</Button>
-          </form>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Pill>{activeWalk ? "Walking live" : "Offline"}</Pill>
+              <Pill>{dogsCount} dogs ready</Pill>
+              <Pill>{cityLabel}</Pill>
+            </div>
+
+            <div className="mt-5 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap">
+              <ButtonLink
+                href={activeWalk ? "#walk-setup" : "#walk-setup"}
+                variant="primary"
+                className="w-full px-4 py-3 text-center sm:w-auto"
+              >
+                {activeWalk ? "View live walk" : "Start walk"}
+              </ButtonLink>
+              <ButtonLink href="/profile" className="w-full px-4 py-3 text-center sm:w-auto">
+                Profile
+              </ButtonLink>
+              <ButtonLink href="/" className="w-full px-4 py-3 text-center sm:w-auto">
+                Home
+              </ButtonLink>
+              <form action={signOut} className="contents sm:block">
+                <Button className="w-full px-4 py-3 sm:w-auto">Sign out</Button>
+              </form>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+            <DashboardStatChip
+              label="Walk status"
+              value={activeWalk ? "Live now" : "Ready to start"}
+            />
+            <DashboardStatChip label="Visibility" value={profile?.default_visibility ?? "followers"} />
+            <DashboardStatChip
+              label="Location mode"
+              value={profile?.default_location_precision ?? "approximate"}
+            />
+          </div>
         </div>
       </SurfaceCard>
 
       <section className="mt-4 flex flex-1 flex-col gap-4 sm:mt-6 sm:gap-6">
-        <SurfaceCard id="walk-setup" className="p-5 sm:p-8">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold text-[var(--text-strong)]">
-                Account ready
-              </p>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--text-body)]">
-                Your account is connected to Supabase auth and your PackWalk
-                profile exists in the database. From here we can move into dog
-                profiles, walk sessions, groups, and live map presence.
-              </p>
-            </div>
-            <div className="hidden rounded-full border border-[rgba(123,167,209,0.28)] bg-white/64 px-3 py-1 text-xs font-medium text-[var(--text-strong)] sm:block">
-              {dogs?.length ?? 0} dogs
-            </div>
-          </div>
-
-          {params.message ? <Notice className="mt-5">{params.message}</Notice> : null}
-          {params.walkMessage ? <Notice className="mt-5">{params.walkMessage}</Notice> : null}
-          {params.walkError ? (
-            <Notice variant="error" className="mt-5">
-              {params.walkError}
-            </Notice>
-          ) : null}
-
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            {profileFacts.map((item) => (
-              <div
-                key={item.label}
-                className="rounded-[24px] border border-white/70 bg-white/65 p-4"
-              >
-                <p className="text-xs font-medium uppercase tracking-[0.2em] text-[var(--text-soft)]">
-                  {item.label}
+        {(params.message || params.walkMessage || params.walkError) && (
+          <SurfaceCard className="p-5 sm:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-[var(--text-strong)]">
+                  Status
                 </p>
-                <p className="mt-2 text-sm text-[var(--text-strong)]">
-                  {item.value}
+                <p className="mt-2 text-sm leading-6 text-[var(--text-body)]">
+                  Your latest account and walking updates live here instead of
+                  taking over the main dashboard layout.
                 </p>
               </div>
-            ))}
-          </div>
-        </SurfaceCard>
+              <ButtonLink href="/profile" className="px-4 py-2">
+                Profile
+              </ButtonLink>
+            </div>
 
-        <SurfaceCard className="p-5 sm:p-8">
+            {params.message ? <Notice className="mt-5">{params.message}</Notice> : null}
+            {params.walkMessage ? <Notice className="mt-5">{params.walkMessage}</Notice> : null}
+            {params.walkError ? (
+              <Notice variant="error" className="mt-5">
+                {params.walkError}
+              </Notice>
+            ) : null}
+          </SurfaceCard>
+        )}
+
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
+          <DashboardActionTile
+            eyebrow="Live"
+            title={activeWalk ? "Your walk is already live" : "Start a live walk"}
+            description={
+              activeWalk
+                ? "Jump into the live walk card to see timing and stop it when you're done."
+                : "Open the walk setup and go visible to nearby walkers in a couple of taps."
+            }
+            action={
+              <ButtonLink
+                href="#walk-setup"
+                variant="primary"
+                className="w-full px-4 py-3 text-center"
+              >
+                {activeWalk ? "Open live walk" : "Open walk setup"}
+              </ButtonLink>
+            }
+          />
+
+          <DashboardActionTile
+            eyebrow="Dogs"
+            title={dogsCount ? "Your dogs are ready" : "Add your first dog"}
+            description={
+              dogsCount
+                ? "Keep profiles fresh before we move into map and meetup features."
+                : "Create a dog profile so your PackWalk presence feels personal right away."
+            }
+            action={
+              <ButtonLink href="#dog-form" className="w-full px-4 py-3 text-center">
+                {dogsCount ? "Manage dogs" : "Add a dog"}
+              </ButtonLink>
+            }
+          />
+
+          <DashboardActionTile
+            eyebrow="Profile"
+            title="Privacy and defaults"
+            description="Review account details, visibility defaults, and location mode without cluttering the main dashboard."
+            action={
+              <ButtonLink href="/profile" className="w-full px-4 py-3 text-center">
+                Open profile
+              </ButtonLink>
+            }
+          />
+        </div>
+
+        <SurfaceCard id="walk-setup" className="p-5 sm:p-8">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-sm font-semibold text-[var(--text-strong)]">
                 Go for a walk
               </p>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--text-body)]">
+              <p className="mt-2 max-w-xl text-sm leading-6 text-[var(--text-body)]">
                 Start a live walk session so nearby users can discover you based
                 on your chosen visibility and location precision.
               </p>
@@ -162,50 +219,42 @@ export default async function DashboardPage({
 
           {activeWalk ? (
             <div className="mt-5 space-y-4">
-              <div className="rounded-[24px] border border-white/70 bg-white/65 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-semibold text-[var(--text-strong)]">
-                    {activeWalk.title || "Active walk"}
-                  </p>
-                  <span className="rounded-full border border-[rgba(123,167,209,0.28)] bg-white/74 px-3 py-1 text-xs font-medium text-[var(--text-body)]">
-                    {activeWalk.visibility}
-                  </span>
+              <div className="rounded-[26px] border border-white/70 bg-white/68 p-4 sm:p-5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Pill>{activeWalk.visibility}</Pill>
+                  <Pill>{activeWalk.location_precision}</Pill>
                 </div>
-                <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                  <div>
-                    <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--text-soft)]">
-                      Started
-                    </p>
-                    <p className="mt-2 text-sm text-[var(--text-strong)]">
-                      {new Date(activeWalk.started_at).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--text-soft)]">
-                      Ends
-                    </p>
-                    <p className="mt-2 text-sm text-[var(--text-strong)]">
-                      {new Date(activeWalk.expires_at).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--text-soft)]">
-                      Precision
-                    </p>
-                    <p className="mt-2 text-sm text-[var(--text-strong)]">
-                      {activeWalk.location_precision}
-                    </p>
-                  </div>
+                <p className="mt-4 text-lg font-semibold text-[var(--text-strong)]">
+                  {activeWalk.title || "Active walk"}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-[var(--text-body)]">
+                  Your walk is live now. Nearby people can discover you based on
+                  your chosen visibility and precision settings.
+                </p>
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                  <DashboardStatChip
+                    label="Started"
+                    value={new Date(activeWalk.started_at).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  />
+                  <DashboardStatChip
+                    label="Ends"
+                    value={new Date(activeWalk.expires_at).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  />
+                  <DashboardStatChip
+                    label="Mode"
+                    value={activeWalk.location_precision}
+                  />
                 </div>
               </div>
 
-              <form action={endWalkSession}>
+              <form action={endWalkSession} className="sm:max-w-[220px]">
                 <Button className="w-full" variant="secondary">
                   End walk
                 </Button>
@@ -213,7 +262,7 @@ export default async function DashboardPage({
             </div>
           ) : (
             <form action={startWalkSession} className="mt-5 space-y-4">
-              <Field htmlFor="title" label="Walk title">
+              <Field htmlFor="title" label="Title">
                 <TextInput
                   id="title"
                   name="title"
@@ -223,41 +272,76 @@ export default async function DashboardPage({
               </Field>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field htmlFor="visibility" label="Who can see this walk">
-                  <SelectInput id="visibility" name="visibility" defaultValue="followers">
-                    <option value="public">Public</option>
-                    <option value="followers">Followers</option>
-                    <option value="private_group">Private group</option>
-                  </SelectInput>
+                <Field htmlFor="visibility" label="Visibility">
+                  <CompactSelect
+                    name="visibility"
+                    defaultValue="followers"
+                    placeholder="Choose visibility"
+                    options={[
+                      {
+                        value: "public",
+                        label: "Public",
+                        description: "Visible to everyone nearby.",
+                      },
+                      {
+                        value: "followers",
+                        label: "Followers",
+                        description: "Only followers can discover your walk.",
+                      },
+                      {
+                        value: "private_group",
+                        label: "Private group",
+                        description: "Keep this walk inside a private context.",
+                      },
+                    ]}
+                  />
                 </Field>
 
-                <Field htmlFor="locationPrecision" label="Location precision">
-                  <SelectInput
-                    id="locationPrecision"
+                <Field htmlFor="locationPrecision" label="Precision">
+                  <CompactSelect
                     name="locationPrecision"
                     defaultValue="approximate"
-                  >
-                    <option value="approximate">Approximate</option>
-                    <option value="exact">Exact</option>
-                  </SelectInput>
+                    placeholder="Choose precision"
+                    options={[
+                      {
+                        value: "approximate",
+                        label: "Approximate",
+                        description: "Share a softer, privacy-friendly area.",
+                      },
+                      {
+                        value: "exact",
+                        label: "Exact",
+                        description: "Use your precise walk position.",
+                      },
+                    ]}
+                  />
                 </Field>
               </div>
 
-              <Field htmlFor="durationMinutes" label="Walk duration">
-                <SelectInput
-                  id="durationMinutes"
-                  name="durationMinutes"
-                  defaultValue="60"
+              <div className="grid gap-4 sm:grid-cols-[auto_auto] sm:items-end sm:justify-start">
+                <Field
+                  htmlFor="durationMinutes"
+                  label="Duration"
+                  className="sm:w-[220px]"
                 >
-                  <option value="30">30 minutes</option>
-                  <option value="45">45 minutes</option>
-                  <option value="60">60 minutes</option>
-                  <option value="90">90 minutes</option>
-                  <option value="120">120 minutes</option>
-                </SelectInput>
-              </Field>
+                  <CompactSelect
+                    name="durationMinutes"
+                    defaultValue="60"
+                    placeholder="Choose duration"
+                    options={[
+                      { value: "30", label: "30 minutes" },
+                      { value: "45", label: "45 minutes" },
+                      { value: "60", label: "60 minutes" },
+                      { value: "90", label: "90 minutes" },
+                      { value: "120", label: "120 minutes" },
+                    ]}
+                  />
+                </Field>
 
-              <Button className="w-full">Start walk</Button>
+                <Button className="w-full sm:min-w-[170px] sm:w-auto sm:px-6">
+                  Start walk
+                </Button>
+              </div>
             </form>
           )}
         </SurfaceCard>
@@ -275,13 +359,13 @@ export default async function DashboardPage({
                 </p>
               </div>
               <div className="rounded-full border border-[rgba(123,167,209,0.28)] bg-white/64 px-3 py-1 text-xs font-medium text-[var(--text-strong)]">
-                {dogs?.length ?? 0} saved
+                {dogsCount} saved
               </div>
             </div>
 
-            {dogs?.length ? (
-              <div className="mt-5 space-y-3">
-                {dogs.map((dog) => (
+            {dogsCount ? (
+              <div className="mt-5 grid gap-3">
+                {dogList.map((dog) => (
                   <div
                     key={dog.id}
                     className="rounded-[24px] border border-white/70 bg-white/65 p-4"
@@ -310,18 +394,19 @@ export default async function DashboardPage({
             )}
           </SurfaceCard>
 
-          <SurfaceCard className="order-1 p-5 lg:order-2 lg:p-6">
+          <SurfaceCard id="dog-form" className="order-1 p-5 lg:order-2 lg:p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold text-[var(--text-strong)]">
                   Add a dog
                 </p>
                 <p className="mt-2 text-sm leading-6 text-[var(--text-body)]">
-                  This is the next real profile step after signup.
+                  Add the dogs you actually walk with so the rest of the app can
+                  feel personal and ready for meetups.
                 </p>
               </div>
               <div className="rounded-full border border-[rgba(123,167,209,0.28)] bg-white/64 px-3 py-1 text-xs font-medium text-[var(--text-strong)] sm:hidden">
-                {dogs?.length ?? 0}
+                {dogsCount}
               </div>
             </div>
 
@@ -370,12 +455,17 @@ export default async function DashboardPage({
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field htmlFor="size" label="Size">
-                  <SelectInput id="size" name="size" defaultValue="">
-                    <option value="">Select size</option>
-                    <option value="small">Small</option>
-                    <option value="medium">Medium</option>
-                    <option value="large">Large</option>
-                  </SelectInput>
+                  <CompactSelect
+                    name="size"
+                    defaultValue=""
+                    placeholder="Select size"
+                    options={[
+                      { value: "", label: "Not set" },
+                      { value: "small", label: "Small" },
+                      { value: "medium", label: "Medium" },
+                      { value: "large", label: "Large" },
+                    ]}
+                  />
                 </Field>
 
                 <Field htmlFor="temperament" label="Temperament">
@@ -392,23 +482,13 @@ export default async function DashboardPage({
             </form>
           </SurfaceCard>
         </div>
-
-        <div className="rounded-[28px] border border-dashed border-[rgba(123,167,209,0.4)] bg-white/34 p-5 sm:p-6">
-          <p className="text-sm font-semibold text-[var(--text-strong)]">
-            Next step
-          </p>
-          <p className="mt-2 text-sm leading-6 text-[var(--text-body)]">
-            Build the first live walk session flow on top of your dog profile
-            and account settings.
-          </p>
-        </div>
       </section>
 
       <div className="sticky bottom-4 z-10 mt-auto pt-2 sm:hidden">
         <SurfaceCard strong className="p-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             {activeWalk ? (
-              <form action={endWalkSession}>
+              <form action={endWalkSession} className="contents">
                 <Button className="w-full" variant="secondary">
                   End walk
                 </Button>
@@ -420,8 +500,11 @@ export default async function DashboardPage({
                 className="w-full px-4 py-3 text-center"
               >
                 Start walk
-              </ButtonLink>
+                </ButtonLink>
             )}
+            <ButtonLink href="/profile" className="w-full px-4 py-3 text-center">
+              Profile
+            </ButtonLink>
             <ButtonLink href="/" className="w-full px-4 py-3 text-center">
               Home
             </ButtonLink>
