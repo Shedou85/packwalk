@@ -1,7 +1,11 @@
 import { redirect } from "next/navigation";
 
 import { signOut } from "@/app/auth/actions";
-import { createDogProfile } from "@/app/dashboard/actions";
+import {
+  createDogProfile,
+  endWalkSession,
+  startWalkSession,
+} from "@/app/dashboard/actions";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Field, SelectInput, TextInput } from "@/components/ui/field";
 import { Notice } from "@/components/ui/notice";
@@ -14,6 +18,8 @@ type DashboardPageProps = {
     message?: string;
     dogMessage?: string;
     dogError?: string;
+    walkMessage?: string;
+    walkError?: string;
   }>;
 };
 
@@ -43,6 +49,13 @@ export default async function DashboardPage({
     .select("id, name, breed, age_years, size, temperament, created_at")
     .eq("owner_id", user.id)
     .order("created_at", { ascending: false });
+
+  const { data: activeWalk } = await supabase
+    .from("walk_sessions")
+    .select("id, title, visibility, location_precision, started_at, expires_at, status")
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .maybeSingle();
 
   const profileFacts = [
     {
@@ -89,7 +102,7 @@ export default async function DashboardPage({
       </SurfaceCard>
 
       <section className="mt-4 flex flex-1 flex-col gap-4 sm:mt-6 sm:gap-6">
-        <SurfaceCard className="p-5 sm:p-8">
+        <SurfaceCard id="walk-setup" className="p-5 sm:p-8">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-sm font-semibold text-[var(--text-strong)]">
@@ -107,6 +120,12 @@ export default async function DashboardPage({
           </div>
 
           {params.message ? <Notice className="mt-5">{params.message}</Notice> : null}
+          {params.walkMessage ? <Notice className="mt-5">{params.walkMessage}</Notice> : null}
+          {params.walkError ? (
+            <Notice variant="error" className="mt-5">
+              {params.walkError}
+            </Notice>
+          ) : null}
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
             {profileFacts.map((item) => (
@@ -123,6 +142,124 @@ export default async function DashboardPage({
               </div>
             ))}
           </div>
+        </SurfaceCard>
+
+        <SurfaceCard className="p-5 sm:p-8">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-[var(--text-strong)]">
+                Go for a walk
+              </p>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--text-body)]">
+                Start a live walk session so nearby users can discover you based
+                on your chosen visibility and location precision.
+              </p>
+            </div>
+            <div className="rounded-full border border-[rgba(123,167,209,0.28)] bg-white/64 px-3 py-1 text-xs font-medium text-[var(--text-strong)]">
+              {activeWalk ? "Live now" : "Offline"}
+            </div>
+          </div>
+
+          {activeWalk ? (
+            <div className="mt-5 space-y-4">
+              <div className="rounded-[24px] border border-white/70 bg-white/65 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-[var(--text-strong)]">
+                    {activeWalk.title || "Active walk"}
+                  </p>
+                  <span className="rounded-full border border-[rgba(123,167,209,0.28)] bg-white/74 px-3 py-1 text-xs font-medium text-[var(--text-body)]">
+                    {activeWalk.visibility}
+                  </span>
+                </div>
+                <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                  <div>
+                    <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--text-soft)]">
+                      Started
+                    </p>
+                    <p className="mt-2 text-sm text-[var(--text-strong)]">
+                      {new Date(activeWalk.started_at).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--text-soft)]">
+                      Ends
+                    </p>
+                    <p className="mt-2 text-sm text-[var(--text-strong)]">
+                      {new Date(activeWalk.expires_at).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--text-soft)]">
+                      Precision
+                    </p>
+                    <p className="mt-2 text-sm text-[var(--text-strong)]">
+                      {activeWalk.location_precision}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <form action={endWalkSession}>
+                <Button className="w-full" variant="secondary">
+                  End walk
+                </Button>
+              </form>
+            </div>
+          ) : (
+            <form action={startWalkSession} className="mt-5 space-y-4">
+              <Field htmlFor="title" label="Walk title">
+                <TextInput
+                  id="title"
+                  name="title"
+                  type="text"
+                  placeholder="Morning park walk"
+                />
+              </Field>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field htmlFor="visibility" label="Who can see this walk">
+                  <SelectInput id="visibility" name="visibility" defaultValue="followers">
+                    <option value="public">Public</option>
+                    <option value="followers">Followers</option>
+                    <option value="private_group">Private group</option>
+                  </SelectInput>
+                </Field>
+
+                <Field htmlFor="locationPrecision" label="Location precision">
+                  <SelectInput
+                    id="locationPrecision"
+                    name="locationPrecision"
+                    defaultValue="approximate"
+                  >
+                    <option value="approximate">Approximate</option>
+                    <option value="exact">Exact</option>
+                  </SelectInput>
+                </Field>
+              </div>
+
+              <Field htmlFor="durationMinutes" label="Walk duration">
+                <SelectInput
+                  id="durationMinutes"
+                  name="durationMinutes"
+                  defaultValue="60"
+                >
+                  <option value="30">30 minutes</option>
+                  <option value="45">45 minutes</option>
+                  <option value="60">60 minutes</option>
+                  <option value="90">90 minutes</option>
+                  <option value="120">120 minutes</option>
+                </SelectInput>
+              </Field>
+
+              <Button className="w-full">Start walk</Button>
+            </form>
+          )}
         </SurfaceCard>
 
         <div className="grid gap-4 sm:gap-6 lg:grid-cols-[1.05fr_0.95fr]">
@@ -270,9 +407,21 @@ export default async function DashboardPage({
       <div className="sticky bottom-4 z-10 mt-auto pt-2 sm:hidden">
         <SurfaceCard strong className="p-3">
           <div className="grid grid-cols-2 gap-3">
-            <Button className="w-full" type="button">
-              Go for a walk
-            </Button>
+            {activeWalk ? (
+              <form action={endWalkSession}>
+                <Button className="w-full" variant="secondary">
+                  End walk
+                </Button>
+              </form>
+            ) : (
+              <ButtonLink
+                href="#walk-setup"
+                variant="primary"
+                className="w-full px-4 py-3 text-center"
+              >
+                Start walk
+              </ButtonLink>
+            )}
             <ButtonLink href="/" className="w-full px-4 py-3 text-center">
               Home
             </ButtonLink>
