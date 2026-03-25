@@ -8,6 +8,7 @@ import {
 } from "@/app/dashboard/actions";
 import { DashboardActionTile } from "@/components/dashboard/dashboard-action-tile";
 import { DashboardStatChip } from "@/components/dashboard/dashboard-stat-chip";
+import { MobileBottomNav } from "@/components/navigation/mobile-bottom-nav";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { CompactSelect } from "@/components/ui/compact-select";
 import { Field, TextInput } from "@/components/ui/field";
@@ -67,7 +68,7 @@ export default async function DashboardPage({
   const cityLabel = profile?.city ?? "City not set";
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 py-4 sm:px-6 sm:py-6">
+    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 py-4 pb-28 sm:px-6 sm:py-6 sm:pb-6">
       <SurfaceCard
         strong
         className="overflow-hidden rounded-[28px] px-4 py-5 sm:px-6 sm:py-6"
@@ -92,11 +93,21 @@ export default async function DashboardPage({
               <Pill>{cityLabel}</Pill>
             </div>
 
-            <div className="mt-5 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap">
+            <div className="mt-5 sm:hidden">
               <ButtonLink
-                href={activeWalk ? "#walk-setup" : "#walk-setup"}
+                href="#walk-setup"
                 variant="primary"
-                className="w-full px-4 py-3 text-center sm:w-auto"
+                className="w-full px-4 py-3 text-center"
+              >
+                {activeWalk ? "View live walk" : "Start walk"}
+              </ButtonLink>
+            </div>
+
+            <div className="mt-5 hidden sm:flex sm:flex-wrap sm:gap-3">
+              <ButtonLink
+                href="#walk-setup"
+                variant="primary"
+                className="px-4 py-3 text-center"
               >
                 {activeWalk ? "View live walk" : "Start walk"}
               </ButtonLink>
@@ -484,33 +495,13 @@ export default async function DashboardPage({
         </div>
       </section>
 
-      <div className="sticky bottom-4 z-10 mt-auto pt-2 sm:hidden">
-        <SurfaceCard strong className="p-3">
-          <div className="grid grid-cols-3 gap-3">
-            {activeWalk ? (
-              <form action={endWalkSession} className="contents">
-                <Button className="w-full" variant="secondary">
-                  End walk
-                </Button>
-              </form>
-            ) : (
-              <ButtonLink
-                href="#walk-setup"
-                variant="primary"
-                className="w-full px-4 py-3 text-center"
-              >
-                Start walk
-                </ButtonLink>
-            )}
-            <ButtonLink href="/profile" className="w-full px-4 py-3 text-center">
-              Profile
-            </ButtonLink>
-            <ButtonLink href="/" className="w-full px-4 py-3 text-center">
-              Home
-            </ButtonLink>
-          </div>
-        </SurfaceCard>
-      </div>
+      <MobileBottomNav
+        items={[
+          { href: "/", label: "Home", icon: "home" },
+          { href: "/dashboard", label: "Walk", icon: "walk" },
+          { href: "/profile", label: "Profile", icon: "profile" },
+        ]}
+      />
     </main>
   );
 }

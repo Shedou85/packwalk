@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { signOut } from "@/app/auth/actions";
+import { MobileBottomNav } from "@/components/navigation/mobile-bottom-nav";
 import { ProfileFactGrid } from "@/components/profile/profile-fact-grid";
 import { ProfileShortcutCard } from "@/components/profile/profile-shortcut-card";
 import { Button, ButtonLink } from "@/components/ui/button";
@@ -78,7 +79,7 @@ export default async function ProfilePage() {
   ];
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 py-4 sm:px-6 sm:py-6">
+    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 py-4 pb-28 sm:px-6 sm:py-6 sm:pb-6">
       <SurfaceCard
         strong
         className="flex flex-col gap-4 rounded-[28px] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6"
@@ -96,7 +97,7 @@ export default async function ProfilePage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-3 sm:flex-nowrap">
+        <div className="hidden flex-wrap gap-3 sm:flex sm:flex-nowrap">
           <ButtonLink href="/dashboard" className="px-4 py-2">
             Dashboard
           </ButtonLink>
@@ -108,6 +109,16 @@ export default async function ProfilePage() {
           </form>
         </div>
       </SurfaceCard>
+
+      <div className="mt-4 sm:hidden">
+        <ButtonLink
+          href="/dashboard#walk-setup"
+          variant="primary"
+          className="w-full px-4 py-3 text-center"
+        >
+          {activeWalkCount ? "Open live walk" : "Start walk"}
+        </ButtonLink>
+      </div>
 
       <section className="mt-4 flex flex-1 flex-col gap-4 sm:mt-6 sm:gap-6">
         <SurfaceCard className="overflow-hidden p-5 sm:p-7">
@@ -195,6 +206,14 @@ export default async function ProfilePage() {
           />
         </div>
       </section>
+
+      <MobileBottomNav
+        items={[
+          { href: "/", label: "Home", icon: "home" },
+          { href: "/dashboard", label: "Walk", icon: "walk" },
+          { href: "/profile", label: "Profile", icon: "profile" },
+        ]}
+      />
     </main>
   );
 }

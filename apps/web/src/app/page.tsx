@@ -1,6 +1,7 @@
 import { ButtonLink } from "@/components/ui/button";
 import { FeatureCard } from "@/components/ui/feature-card";
 import { InfoBlock } from "@/components/ui/info-block";
+import { MobileBottomNav } from "@/components/navigation/mobile-bottom-nav";
 import { Pill } from "@/components/ui/pill";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { createClient } from "@/lib/supabase/server";
@@ -37,7 +38,7 @@ export default async function Home() {
   } = await supabase.auth.getUser();
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 py-4 sm:px-6 sm:py-6">
+    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 py-4 pb-28 sm:px-6 sm:py-6 sm:pb-6">
       <SurfaceCard
         strong
         className="flex items-center justify-between rounded-[28px] px-4 py-4 sm:px-5"
@@ -72,17 +73,27 @@ export default async function Home() {
             location sharing under your control.
           </p>
 
-          <div className="mt-6 grid gap-3 sm:flex sm:flex-wrap">
+          <div className="mt-6 sm:hidden">
             <ButtonLink
               href={user ? "/dashboard" : "/sign-up"}
               variant="primary"
-              className="w-full px-5 py-3 text-center sm:w-auto"
+              className="w-full px-5 py-3 text-center"
+            >
+              {user ? "Open dashboard" : "Create account"}
+            </ButtonLink>
+          </div>
+
+          <div className="mt-6 hidden sm:flex sm:flex-wrap sm:gap-3">
+            <ButtonLink
+              href={user ? "/dashboard" : "/sign-up"}
+              variant="primary"
+              className="px-5 py-3 text-center"
             >
               {user ? "Open dashboard" : "Create account"}
             </ButtonLink>
             <ButtonLink
               href={user ? "/dashboard" : "/sign-in"}
-              className="w-full px-5 py-3 text-center sm:w-auto"
+              className="px-5 py-3 text-center"
             >
               {user ? "View session" : "Sign in"}
             </ButtonLink>
@@ -137,25 +148,32 @@ export default async function Home() {
         </div>
       </section>
 
-      <div className="sticky bottom-4 mt-auto pt-2 sm:hidden">
-        <SurfaceCard strong className="p-3">
-          <div className="grid grid-cols-2 gap-3">
-            <ButtonLink
-              href={user ? "/dashboard" : "/sign-up"}
-              variant="primary"
-              className="w-full px-4 py-3 text-center"
-            >
-              {user ? "Dashboard" : "Join now"}
-            </ButtonLink>
-            <ButtonLink
-              href={user ? "/dashboard" : "/sign-in"}
-              className="w-full px-4 py-3 text-center"
-            >
-              {user ? "Session" : "Sign in"}
-            </ButtonLink>
-          </div>
-        </SurfaceCard>
-      </div>
+      {user ? (
+        <MobileBottomNav
+          items={[
+            { href: "/", label: "Home", icon: "home" },
+            { href: "/dashboard", label: "Walk", icon: "walk" },
+            { href: "/profile", label: "Profile", icon: "profile" },
+          ]}
+        />
+      ) : (
+        <div className="sticky bottom-4 mt-auto pt-2 sm:hidden">
+          <SurfaceCard strong className="p-3">
+            <div className="grid grid-cols-2 gap-3">
+              <ButtonLink
+                href="/sign-up"
+                variant="primary"
+                className="w-full px-4 py-3 text-center"
+              >
+                Join now
+              </ButtonLink>
+              <ButtonLink href="/sign-in" className="w-full px-4 py-3 text-center">
+                Sign in
+              </ButtonLink>
+            </div>
+          </SurfaceCard>
+        </div>
+      )}
     </main>
   );
 }
