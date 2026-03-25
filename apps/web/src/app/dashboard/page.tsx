@@ -1,8 +1,11 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { signOut } from "@/app/auth/actions";
 import { createDogProfile } from "@/app/dashboard/actions";
+import { Button, ButtonLink } from "@/components/ui/button";
+import { Field, SelectInput, TextInput } from "@/components/ui/field";
+import { Notice } from "@/components/ui/notice";
+import { SurfaceCard } from "@/components/ui/surface-card";
 import { ensureProfile } from "@/lib/supabase/profiles";
 import { createClient } from "@/lib/supabase/server";
 
@@ -41,232 +44,120 @@ export default async function DashboardPage({
     .eq("owner_id", user.id)
     .order("created_at", { ascending: false });
 
+  const profileFacts = [
+    {
+      label: "Email",
+      value: user.email ?? "No email",
+    },
+    {
+      label: "Username",
+      value: profile?.username ?? "Not set yet",
+    },
+    {
+      label: "Default visibility",
+      value: profile?.default_visibility ?? "followers",
+    },
+    {
+      label: "Location precision",
+      value: profile?.default_location_precision ?? "approximate",
+    },
+  ];
+
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-6 py-8 sm:px-10 lg:px-12">
-      <header className="glass-panel-strong flex flex-col gap-4 rounded-[28px] px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 py-4 sm:px-6 sm:py-6">
+      <SurfaceCard
+        strong
+        className="flex flex-col gap-4 rounded-[28px] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6"
+      >
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-sky-700">
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--accent-strong)]">
             PackWalk dashboard
           </p>
-          <h1 className="mt-2 text-3xl font-semibold text-slate-950">
+          <h1 className="mt-2 text-2xl font-semibold text-[var(--text-strong)] sm:text-3xl">
             Welcome, {profile?.display_name ?? user.email ?? "walker"}.
           </h1>
         </div>
 
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href="/"
-            className="rounded-full border border-white/70 bg-white/70 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-white"
-          >
+        <div className="flex flex-wrap gap-3 sm:flex-nowrap">
+          <ButtonLink href="/" className="px-4 py-2">
             Home
-          </Link>
+          </ButtonLink>
           <form action={signOut}>
-            <button className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-transform hover:-translate-y-0.5">
-              Sign out
-            </button>
+            <Button className="px-4 py-2">Sign out</Button>
           </form>
         </div>
-      </header>
+      </SurfaceCard>
 
-      <section className="mt-8 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="glass-panel rounded-[32px] p-6 sm:p-8">
-          <p className="text-sm font-semibold text-slate-900">Account ready</p>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
-            Your account is connected to Supabase auth and your PackWalk profile
-            record exists in the database. This is the base we will use for dog
-            profiles, walk sessions, groups, and live map presence.
-          </p>
-
-          {params.message ? (
-            <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-              {params.message}
-            </div>
-          ) : null}
-
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-[24px] border border-white/70 bg-white/65 p-4">
-              <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
-                Email
+      <section className="mt-4 flex flex-1 flex-col gap-4 sm:mt-6 sm:gap-6">
+        <SurfaceCard className="p-5 sm:p-8">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-[var(--text-strong)]">
+                Account ready
               </p>
-              <p className="mt-2 text-sm text-slate-900">{user.email}</p>
-            </div>
-
-            <div className="rounded-[24px] border border-white/70 bg-white/65 p-4">
-              <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
-                Username
-              </p>
-              <p className="mt-2 text-sm text-slate-900">
-                {profile?.username ?? "Not set yet"}
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--text-body)]">
+                Your account is connected to Supabase auth and your PackWalk
+                profile exists in the database. From here we can move into dog
+                profiles, walk sessions, groups, and live map presence.
               </p>
             </div>
-
-            <div className="rounded-[24px] border border-white/70 bg-white/65 p-4">
-              <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
-                Default visibility
-              </p>
-              <p className="mt-2 text-sm text-slate-900">
-                {profile?.default_visibility ?? "followers"}
-              </p>
-            </div>
-
-            <div className="rounded-[24px] border border-white/70 bg-white/65 p-4">
-              <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
-                Location precision
-              </p>
-              <p className="mt-2 text-sm text-slate-900">
-                {profile?.default_location_precision ?? "approximate"}
-              </p>
+            <div className="hidden rounded-full border border-[rgba(123,167,209,0.28)] bg-white/64 px-3 py-1 text-xs font-medium text-[var(--text-strong)] sm:block">
+              {dogs?.length ?? 0} dogs
             </div>
           </div>
-        </div>
 
-        <aside className="flex flex-col gap-6">
-          <div className="glass-panel rounded-[28px] p-6">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold text-slate-900">
-                  Dog profiles
+          {params.message ? <Notice className="mt-5">{params.message}</Notice> : null}
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            {profileFacts.map((item) => (
+              <div
+                key={item.label}
+                className="rounded-[24px] border border-white/70 bg-white/65 p-4"
+              >
+                <p className="text-xs font-medium uppercase tracking-[0.2em] text-[var(--text-soft)]">
+                  {item.label}
                 </p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Add your first dog so walks, groups, and meetups feel tied to
-                  a real profile.
+                <p className="mt-2 text-sm text-[var(--text-strong)]">
+                  {item.value}
                 </p>
               </div>
-              <div className="rounded-full border border-white/70 bg-white/70 px-3 py-1 text-xs font-medium text-slate-700">
+            ))}
+          </div>
+        </SurfaceCard>
+
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+          <SurfaceCard className="order-2 p-5 lg:order-1 lg:p-6">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-[var(--text-strong)]">
+                  Your dogs
+                </p>
+                <p className="mt-2 text-sm leading-6 text-[var(--text-body)]">
+                  Keep your dog profiles ready before building live walk and
+                  meetup features.
+                </p>
+              </div>
+              <div className="rounded-full border border-[rgba(123,167,209,0.28)] bg-white/64 px-3 py-1 text-xs font-medium text-[var(--text-strong)]">
                 {dogs?.length ?? 0} saved
               </div>
             </div>
 
-            {params.dogMessage ? (
-              <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                {params.dogMessage}
-              </div>
-            ) : null}
-
-            {params.dogError ? (
-              <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                {params.dogError}
-              </div>
-            ) : null}
-
-            <form action={createDogProfile} className="mt-6 space-y-4">
-              <div>
-                <label
-                  htmlFor="name"
-                  className="text-sm font-medium text-slate-700"
-                >
-                  Dog name
-                </label>
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  required
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-slate-900 outline-none transition-colors focus:border-sky-400"
-                  placeholder="Milo"
-                />
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label
-                    htmlFor="breed"
-                    className="text-sm font-medium text-slate-700"
-                  >
-                    Breed
-                  </label>
-                  <input
-                    id="breed"
-                    name="breed"
-                    type="text"
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-slate-900 outline-none transition-colors focus:border-sky-400"
-                    placeholder="Golden Retriever"
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="ageYears"
-                    className="text-sm font-medium text-slate-700"
-                  >
-                    Age
-                  </label>
-                  <input
-                    id="ageYears"
-                    name="ageYears"
-                    type="number"
-                    min="0"
-                    max="30"
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-slate-900 outline-none transition-colors focus:border-sky-400"
-                    placeholder="4"
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label
-                    htmlFor="size"
-                    className="text-sm font-medium text-slate-700"
-                  >
-                    Size
-                  </label>
-                  <select
-                    id="size"
-                    name="size"
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-slate-900 outline-none transition-colors focus:border-sky-400"
-                    defaultValue=""
-                  >
-                    <option value="">Select size</option>
-                    <option value="small">Small</option>
-                    <option value="medium">Medium</option>
-                    <option value="large">Large</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="temperament"
-                    className="text-sm font-medium text-slate-700"
-                  >
-                    Temperament
-                  </label>
-                  <input
-                    id="temperament"
-                    name="temperament"
-                    type="text"
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-slate-900 outline-none transition-colors focus:border-sky-400"
-                    placeholder="Friendly, playful"
-                  />
-                </div>
-              </div>
-
-              <button className="w-full rounded-full bg-slate-950 px-5 py-3 text-sm font-medium text-white transition-transform hover:-translate-y-0.5">
-                Add dog profile
-              </button>
-            </form>
-          </div>
-
-          <div className="glass-panel rounded-[28px] p-6">
-            <p className="text-sm font-semibold text-slate-900">
-              Your dogs
-            </p>
             {dogs?.length ? (
-              <div className="mt-4 space-y-3">
+              <div className="mt-5 space-y-3">
                 {dogs.map((dog) => (
                   <div
                     key={dog.id}
                     className="rounded-[24px] border border-white/70 bg-white/65 p-4"
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-slate-900">
+                      <p className="text-sm font-semibold text-[var(--text-strong)]">
                         {dog.name}
                       </p>
-                      <span className="rounded-full border border-white/70 bg-white/80 px-3 py-1 text-xs font-medium text-slate-600">
+                      <span className="rounded-full border border-[rgba(123,167,209,0.28)] bg-white/74 px-3 py-1 text-xs font-medium text-[var(--text-body)]">
                         {dog.size ?? "size not set"}
                       </span>
                     </div>
-                    <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-500">
+                    <div className="mt-2 flex flex-wrap gap-2 text-xs text-[var(--text-soft)]">
                       {dog.breed ? <span>{dog.breed}</span> : null}
                       {dog.age_years !== null ? <span>{dog.age_years} years old</span> : null}
                       {dog.temperament ? <span>{dog.temperament}</span> : null}
@@ -275,22 +166,119 @@ export default async function DashboardPage({
                 ))}
               </div>
             ) : (
-              <p className="mt-4 text-sm leading-6 text-slate-600">
+              <p className="mt-4 text-sm leading-6 text-[var(--text-body)]">
                 No dog profiles yet. Add your first dog to personalize your
                 PackWalk presence.
               </p>
             )}
-          </div>
+          </SurfaceCard>
 
-          <div className="rounded-[28px] border border-dashed border-slate-300/80 bg-white/40 p-6">
-            <p className="text-sm font-semibold text-slate-900">Next step</p>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Build the first live walk session flow on top of your dog profile
-              and account settings.
-            </p>
-          </div>
-        </aside>
+          <SurfaceCard className="order-1 p-5 lg:order-2 lg:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-[var(--text-strong)]">
+                  Add a dog
+                </p>
+                <p className="mt-2 text-sm leading-6 text-[var(--text-body)]">
+                  This is the next real profile step after signup.
+                </p>
+              </div>
+              <div className="rounded-full border border-[rgba(123,167,209,0.28)] bg-white/64 px-3 py-1 text-xs font-medium text-[var(--text-strong)] sm:hidden">
+                {dogs?.length ?? 0}
+              </div>
+            </div>
+
+            {params.dogMessage ? (
+              <Notice className="mt-5">{params.dogMessage}</Notice>
+            ) : null}
+
+            {params.dogError ? (
+              <Notice variant="error" className="mt-5">
+                {params.dogError}
+              </Notice>
+            ) : null}
+
+            <form action={createDogProfile} className="mt-5 space-y-4">
+              <Field htmlFor="name" label="Dog name">
+                <TextInput
+                  id="name"
+                  name="name"
+                  type="text"
+                  required
+                  placeholder="Milo"
+                />
+              </Field>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field htmlFor="breed" label="Breed">
+                  <TextInput
+                    id="breed"
+                    name="breed"
+                    type="text"
+                    placeholder="Golden Retriever"
+                  />
+                </Field>
+
+                <Field htmlFor="ageYears" label="Age">
+                  <TextInput
+                    id="ageYears"
+                    name="ageYears"
+                    type="number"
+                    min="0"
+                    max="30"
+                    placeholder="4"
+                  />
+                </Field>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field htmlFor="size" label="Size">
+                  <SelectInput id="size" name="size" defaultValue="">
+                    <option value="">Select size</option>
+                    <option value="small">Small</option>
+                    <option value="medium">Medium</option>
+                    <option value="large">Large</option>
+                  </SelectInput>
+                </Field>
+
+                <Field htmlFor="temperament" label="Temperament">
+                  <TextInput
+                    id="temperament"
+                    name="temperament"
+                    type="text"
+                    placeholder="Friendly, playful"
+                  />
+                </Field>
+              </div>
+
+              <Button className="w-full">Add dog profile</Button>
+            </form>
+          </SurfaceCard>
+        </div>
+
+        <div className="rounded-[28px] border border-dashed border-[rgba(123,167,209,0.4)] bg-white/34 p-5 sm:p-6">
+          <p className="text-sm font-semibold text-[var(--text-strong)]">
+            Next step
+          </p>
+          <p className="mt-2 text-sm leading-6 text-[var(--text-body)]">
+            Build the first live walk session flow on top of your dog profile
+            and account settings.
+          </p>
+        </div>
       </section>
+
+      <div className="sticky bottom-4 z-10 mt-auto pt-2 sm:hidden">
+        <SurfaceCard strong className="p-3">
+          <div className="grid grid-cols-2 gap-3">
+            <Button className="w-full" type="button">
+              Go for a walk
+            </Button>
+            <ButtonLink href="/" className="w-full px-4 py-3 text-center">
+              Home
+            </ButtonLink>
+          </div>
+        </SurfaceCard>
+      </div>
     </main>
   );
 }

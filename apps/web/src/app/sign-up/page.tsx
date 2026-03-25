@@ -2,6 +2,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { signUp } from "@/app/auth/actions";
+import { AuthShell } from "@/components/auth/auth-shell";
+import { Button, ButtonLink } from "@/components/ui/button";
+import { Field, TextInput } from "@/components/ui/field";
+import { Notice } from "@/components/ui/notice";
 import { createClient } from "@/lib/supabase/server";
 
 type SignUpPageProps = {
@@ -22,132 +26,98 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-6xl items-center px-6 py-10 sm:px-10">
-      <div className="grid w-full gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-        <section className="glass-panel-strong rounded-[32px] p-6 sm:p-8">
+    <AuthShell
+      reverse
+      side={
+        <>
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--accent-strong)]">
+            Privacy first
+          </p>
+          <h2 className="mt-5 text-4xl font-semibold tracking-tight text-[var(--text-strong)]">
+            Share your walk only on your terms.
+          </h2>
+          <ul className="mt-6 space-y-4 text-sm leading-6 text-[var(--text-body)]">
+            <li>Choose public, followers-only, or private-group visibility.</li>
+            <li>Use approximate location instead of exact positioning.</li>
+            <li>Join public or private dog-walking groups in real time.</li>
+          </ul>
+        </>
+      }
+    >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-500">Get started</p>
-              <h1 className="mt-1 text-3xl font-semibold text-slate-950">
+              <p className="text-sm font-medium text-[var(--text-soft)]">Get started</p>
+              <h1 className="mt-1 text-3xl font-semibold text-[var(--text-strong)]">
                 Create your PackWalk account
               </h1>
             </div>
-            <Link
-              href="/"
-              className="rounded-full border border-white/70 bg-white/70 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-white"
-            >
-              Home
-            </Link>
+            <ButtonLink href="/">Home</ButtonLink>
           </div>
 
           <form action={signUp} className="mt-8 grid gap-5 sm:grid-cols-2">
-            <div className="sm:col-span-2">
-              <label
-                htmlFor="displayName"
-                className="text-sm font-medium text-slate-700"
-              >
-                Display name
-              </label>
-              <input
+            <Field htmlFor="displayName" label="Display name" className="sm:col-span-2">
+              <TextInput
                 id="displayName"
                 name="displayName"
                 type="text"
                 required
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-slate-900 outline-none transition-colors focus:border-sky-400"
                 placeholder="Marius"
               />
-            </div>
+            </Field>
 
-            <div className="sm:col-span-2">
-              <label
-                htmlFor="username"
-                className="text-sm font-medium text-slate-700"
-              >
-                Username
-              </label>
-              <input
+            <Field htmlFor="username" label="Username" className="sm:col-span-2">
+              <TextInput
                 id="username"
                 name="username"
                 type="text"
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-slate-900 outline-none transition-colors focus:border-sky-400"
                 placeholder="packwalker85"
               />
-            </div>
+            </Field>
 
-            <div className="sm:col-span-2">
-              <label
-                htmlFor="email"
-                className="text-sm font-medium text-slate-700"
-              >
-                Email
-              </label>
-              <input
+            <Field htmlFor="email" label="Email" className="sm:col-span-2">
+              <TextInput
                 id="email"
                 name="email"
                 type="email"
                 required
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-slate-900 outline-none transition-colors focus:border-sky-400"
                 placeholder="marius@example.com"
               />
-            </div>
+            </Field>
 
-            <div className="sm:col-span-2">
-              <label
-                htmlFor="password"
-                className="text-sm font-medium text-slate-700"
-              >
-                Password
-              </label>
-              <input
+            <Field htmlFor="password" label="Password" className="sm:col-span-2">
+              <TextInput
                 id="password"
                 name="password"
                 type="password"
                 required
                 minLength={6}
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-slate-900 outline-none transition-colors focus:border-sky-400"
                 placeholder="Choose a secure password"
               />
-            </div>
+            </Field>
 
             {params.error ? (
-              <p className="sm:col-span-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              <Notice variant="error" className="sm:col-span-2">
                 {params.error}
-              </p>
+              </Notice>
             ) : null}
 
             <div className="sm:col-span-2">
-              <button className="w-full rounded-full bg-slate-950 px-5 py-3 text-sm font-medium text-white transition-transform hover:-translate-y-0.5">
+              <Button className="w-full">
                 Create account
-              </button>
+              </Button>
             </div>
           </form>
 
-          <p className="mt-6 text-sm text-slate-600">
+          <p className="mt-6 text-sm text-[var(--text-body)]">
             Already have an account?{" "}
-            <Link href="/sign-in" className="font-medium text-sky-700">
+            <Link href="/sign-in" className="font-medium text-[var(--accent-strong)]">
               Sign in
             </Link>
           </p>
-          <p className="mt-3 text-xs leading-5 text-slate-500">
+          <p className="mt-3 text-xs leading-5 text-[var(--text-soft)]">
             If email confirmation is enabled in Supabase, you will need to
             confirm your address before the dashboard becomes available.
           </p>
-        </section>
-
-        <section className="glass-panel rounded-[32px] p-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-sky-700">
-            Privacy first
-          </p>
-          <h2 className="mt-5 text-4xl font-semibold tracking-tight text-slate-950">
-            Share your walk only on your terms.
-          </h2>
-          <ul className="mt-6 space-y-4 text-sm leading-6 text-slate-600">
-            <li>Choose public, followers-only, or private-group visibility.</li>
-            <li>Use approximate location instead of exact positioning.</li>
-            <li>Join public or private dog-walking groups in real time.</li>
-          </ul>
-        </section>
-      </div>
-    </main>
+    </AuthShell>
   );
 }

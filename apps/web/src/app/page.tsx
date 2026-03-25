@@ -1,4 +1,34 @@
+import { ButtonLink } from "@/components/ui/button";
+import { FeatureCard } from "@/components/ui/feature-card";
+import { InfoBlock } from "@/components/ui/info-block";
+import { Pill } from "@/components/ui/pill";
+import { SurfaceCard } from "@/components/ui/surface-card";
 import { createClient } from "@/lib/supabase/server";
+
+const features = [
+  {
+    title: "Go for a walk",
+    body: "Start a live session with exact or approximate sharing.",
+  },
+  {
+    title: "Meet nearby",
+    body: "Discover walkers on the map based on visibility rules.",
+  },
+  {
+    title: "Coordinate groups",
+    body: "Use private or public group chat with live ETA context.",
+  },
+];
+
+const stack = [
+  "Next.js",
+  "TypeScript",
+  "Tailwind",
+  "TanStack Query",
+  "Zustand",
+  "Supabase",
+  "Mapbox",
+];
 
 export default async function Home() {
   const supabase = await createClient();
@@ -7,143 +37,125 @@ export default async function Home() {
   } = await supabase.auth.getUser();
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-6 py-8 sm:px-10 lg:px-12">
-      <header className="glass-panel-strong flex items-center justify-between rounded-[28px] px-5 py-4 sm:px-6">
+    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 py-4 sm:px-6 sm:py-6">
+      <SurfaceCard
+        strong
+        className="flex items-center justify-between rounded-[28px] px-4 py-4 sm:px-5"
+      >
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-sky-700">
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--accent-strong)]">
             PackWalk
           </p>
-          <h1 className="mt-1 text-xl font-semibold text-slate-900 sm:text-2xl">
+          <h1 className="mt-1 text-lg font-semibold text-[var(--text-strong)] sm:text-2xl">
             Realtime dog-walking meetups.
           </h1>
         </div>
-        <div className="rounded-full border border-white/60 bg-white/65 px-4 py-2 text-sm font-medium text-slate-700">
-          MVP setup in progress
-        </div>
-      </header>
+        <Pill className="px-3 py-1.5 text-[11px] sm:px-4 sm:py-2 sm:text-sm">
+          MVP setup
+        </Pill>
+      </SurfaceCard>
 
-      <section className="grid flex-1 gap-6 py-8 lg:grid-cols-[1.2fr_0.8fr]">
-        <div className="glass-panel rounded-[32px] p-6 sm:p-8 lg:p-10">
-          <div className="max-w-2xl">
-            <p className="inline-flex rounded-full border border-white/70 bg-white/60 px-3 py-1 text-xs font-medium text-slate-600">
-              Live map + groups + privacy-first presence
-            </p>
-            <h2 className="mt-6 text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
-              See who is walking now, meet nearby dog owners, and coordinate
-              together.
-            </h2>
-            <p className="mt-5 max-w-xl text-base leading-7 text-slate-600 sm:text-lg">
-              PackWalk helps people go live while walking, control who can see
-              them, join public or private groups, and coordinate meetups with
-              distance and ETA awareness.
-            </p>
-          </div>
+      <section className="flex flex-1 flex-col gap-4 py-4 sm:gap-6 sm:py-6">
+        <SurfaceCard className="p-5 sm:p-8">
+          <Pill className="bg-white/52 text-[var(--text-body)]">
+            Live map + groups + privacy-first presence
+          </Pill>
 
-          <div className="mt-8 flex flex-wrap gap-3">
-            <a
+          <h2 className="mt-5 max-w-2xl text-3xl font-semibold tracking-tight text-[var(--text-strong)] sm:text-5xl">
+            See who is walking now and meet nearby dog owners without planning
+            from a desktop.
+          </h2>
+
+          <p className="mt-4 max-w-xl text-sm leading-7 text-[var(--text-body)] sm:text-lg">
+            PackWalk is built for people already outside with their phone in
+            hand. Go live, see who is nearby, coordinate a meetup, and keep
+            location sharing under your control.
+          </p>
+
+          <div className="mt-6 grid gap-3 sm:flex sm:flex-wrap">
+            <ButtonLink
               href={user ? "/dashboard" : "/sign-up"}
-              className="rounded-full bg-slate-950 px-5 py-3 text-sm font-medium text-white transition-transform hover:-translate-y-0.5"
+              variant="primary"
+              className="w-full px-5 py-3 text-center sm:w-auto"
             >
               {user ? "Open dashboard" : "Create account"}
-            </a>
-            <a
+            </ButtonLink>
+            <ButtonLink
               href={user ? "/dashboard" : "/sign-in"}
-              className="rounded-full border border-slate-200 bg-white/75 px-5 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-white"
+              className="w-full px-5 py-3 text-center sm:w-auto"
             >
               {user ? "View session" : "Sign in"}
-            </a>
+            </ButtonLink>
           </div>
+        </SurfaceCard>
 
-          <div className="mt-10 grid gap-4 sm:grid-cols-3">
-            {[
-              {
-                title: "Go for a walk",
-                body: "Start a live session with exact or approximate sharing.",
-              },
-              {
-                title: "Meet nearby",
-                body: "Discover walkers on the map based on visibility rules.",
-              },
-              {
-                title: "Coordinate groups",
-                body: "Use private or public group chat with live ETA context.",
-              },
-            ].map((item) => (
-              <div
-                key={item.title}
-                className="rounded-[24px] border border-white/60 bg-white/55 p-4"
-              >
-                <h3 className="text-sm font-semibold text-slate-900">
-                  {item.title}
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  {item.body}
-                </p>
-              </div>
-            ))}
-          </div>
+        <div className="grid gap-3 sm:grid-cols-3 sm:gap-4">
+          {features.map((item) => (
+            <FeatureCard key={item.title} title={item.title} body={item.body} />
+          ))}
         </div>
 
-        <aside className="flex flex-col gap-6">
-          <div className="glass-panel rounded-[28px] p-6">
-            <p className="text-sm font-semibold text-slate-900">MVP pillars</p>
-            <ul className="mt-4 space-y-3 text-sm text-slate-600">
-              <li>Realtime walk sessions with privacy controls</li>
-              <li>Live map discovery for nearby walkers</li>
-              <li>Public and private groups with chat</li>
-              <li>Supabase-backed auth, presence, and storage</li>
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+          <InfoBlock title="Why this feels mobile-first">
+            <ul className="space-y-3 text-sm text-[var(--text-body)]">
+              <li>Realtime walk sessions with quick privacy controls</li>
+              <li>Map discovery designed for people already outside</li>
+              <li>Groups and chat built around on-the-go coordination</li>
+              <li>Primary actions stay reachable without complex menus</li>
             </ul>
-          </div>
+          </InfoBlock>
 
-          <div className="glass-panel rounded-[28px] p-6">
-            <p className="text-sm font-semibold text-slate-900">
-              Initial stack
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {[
-                "Next.js",
-                "TypeScript",
-                "Tailwind",
-                "TanStack Query",
-                "Zustand",
-                "Supabase",
-                "Mapbox",
-              ].map((item) => (
-                <span
-                  key={item}
-                  className="rounded-full border border-white/70 bg-white/65 px-3 py-1 text-xs font-medium text-slate-700"
-                >
-                  {item}
-                </span>
+          <InfoBlock title="Current stack">
+            <div className="flex flex-wrap gap-2">
+              {stack.map((item) => (
+                <Pill key={item}>{item}</Pill>
               ))}
             </div>
-          </div>
+          </InfoBlock>
 
-          <div className="glass-panel rounded-[28px] p-6">
-            <p className="text-sm font-semibold text-slate-900">
-              Backend connection
+          <InfoBlock title="Backend connection">
+            <p className="text-sm leading-6 text-[var(--text-body)]">
+              Supabase environment variables are configured and SSR helpers are
+              ready for auth, profiles, and walk session queries.
             </p>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Supabase environment variables are configured and SSR client
-              helpers are ready for auth, profiles, and walk session queries.
-            </p>
-            <div className="mt-4 rounded-2xl border border-white/70 bg-white/70 px-4 py-3 text-sm text-slate-700">
+            <div className="mt-4 rounded-2xl border border-[rgba(123,167,209,0.28)] bg-white/64 px-4 py-3 text-sm text-[var(--text-strong)]">
               {user
                 ? `Signed in as ${user.email ?? "an authenticated user"}`
                 : "No active session yet. Auth wiring is ready."}
             </div>
-          </div>
+          </InfoBlock>
 
-          <div className="rounded-[28px] border border-dashed border-slate-300/80 bg-white/40 p-6">
-            <p className="text-sm font-semibold text-slate-900">Next up</p>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Build authentication, profile creation, and the first live map
-              shell on top of the schema and project structure already added to
-              the workspace.
+          <div className="rounded-[28px] border border-dashed border-[rgba(123,167,209,0.4)] bg-white/34 p-5 sm:p-6">
+            <p className="text-sm font-semibold text-[var(--text-strong)]">
+              Next up
+            </p>
+            <p className="mt-2 text-sm leading-6 text-[var(--text-body)]">
+              Build the first live map and `Go for a walk` flow around the same
+              mobile-first logic.
             </p>
           </div>
-        </aside>
+        </div>
       </section>
+
+      <div className="sticky bottom-4 mt-auto pt-2 sm:hidden">
+        <SurfaceCard strong className="p-3">
+          <div className="grid grid-cols-2 gap-3">
+            <ButtonLink
+              href={user ? "/dashboard" : "/sign-up"}
+              variant="primary"
+              className="w-full px-4 py-3 text-center"
+            >
+              {user ? "Dashboard" : "Join now"}
+            </ButtonLink>
+            <ButtonLink
+              href={user ? "/dashboard" : "/sign-in"}
+              className="w-full px-4 py-3 text-center"
+            >
+              {user ? "Session" : "Sign in"}
+            </ButtonLink>
+          </div>
+        </SurfaceCard>
+      </div>
     </main>
   );
 }
