@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Map, { Marker, Popup } from "react-map-gl/mapbox";
-import type { ViewStateChangeEvent } from "react-map-gl/mapbox";
+import type { MapRef } from "react-map-gl/mapbox";
 
 import { cn } from "@/lib/cn";
 
@@ -30,6 +30,7 @@ const fallbackCenter = {
 
 export function MapLiveView({ token, walkers }: MapLiveViewProps) {
   const [selectedId, setSelectedId] = useState<string | null>(walkers[0]?.id ?? null);
+  const mapRef = useRef<MapRef>(null);
 
   const initialViewState = useMemo(() => {
     if (!walkers.length) {
@@ -47,29 +48,27 @@ export function MapLiveView({ token, walkers }: MapLiveViewProps) {
       zoom: walkers.length > 1 ? 12 : 13.5,
     };
   }, [walkers]);
-  const [viewState, setViewState] = useState(initialViewState);
 
   const selectedWalker =
     walkers.find((walker) => walker.id === selectedId) ?? walkers[0] ?? null;
 
-  useEffect(() => {
-    setViewState(initialViewState);
-  }, [initialViewState]);
-
-  const handleMove = (event: ViewStateChangeEvent) => {
-    setViewState(event.viewState);
-  };
-
-  const recenterMap = () => {
-    setViewState(initialViewState);
+  // Keep Mapbox camera uncontrolled during interaction.
+  // Reintroducing `viewState` + `onMove` here would put camera movement behind
+  // React state updates and can make markers appear detached from the map while
+  // panning or zooming. Recenter actions should use `mapRef` methods instead.
+  const recenterToWalkers = () => {
+    mapRef.current?.flyTo({
+      center: [initialViewState.longitude, initialViewState.latitude],
+      zoom: initialViewState.zoom,
+    });
   };
 
   return (
     <div className="relative h-[360px] w-full overflow-hidden sm:h-[420px]">
       <Map
+        ref={mapRef}
         mapboxAccessToken={token}
-        {...viewState}
-        onMove={handleMove}
+        initialViewState={initialViewState}
         mapStyle="mapbox://styles/mapbox/streets-v12"
         style={{ width: "100%", height: "100%" }}
       >
@@ -144,7 +143,7 @@ export function MapLiveView({ token, walkers }: MapLiveViewProps) {
 
       <button
         type="button"
-        onClick={recenterMap}
+        onClick={recenterToWalkers}
         className="absolute right-4 top-4 z-10 inline-flex cursor-pointer items-center gap-2 rounded-full border border-white/72 bg-white/88 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-strong)] shadow-[0_14px_28px_rgba(35,60,89,0.16)] backdrop-blur-md transition-[transform,box-shadow,background-color] hover:-translate-y-0.5 hover:bg-white"
       >
         <svg
