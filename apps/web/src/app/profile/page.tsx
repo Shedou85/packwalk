@@ -29,7 +29,12 @@ export default async function ProfilePage() {
     .eq("id", user.id)
     .single();
 
-  const [{ count: dogsCount }, { count: activeWalkCount }] = await Promise.all([
+  const [
+    { count: dogsCount },
+    { count: activeWalkCount },
+    { count: followingCount },
+    { count: followersCount },
+  ] = await Promise.all([
     supabase
       .from("dogs")
       .select("*", { count: "exact", head: true })
@@ -39,6 +44,14 @@ export default async function ProfilePage() {
       .select("*", { count: "exact", head: true })
       .eq("user_id", user.id)
       .eq("status", "active"),
+    supabase
+      .from("follows")
+      .select("*", { count: "exact", head: true })
+      .eq("follower_id", user.id),
+    supabase
+      .from("follows")
+      .select("*", { count: "exact", head: true })
+      .eq("following_id", user.id),
   ]);
 
   const accountFacts = [
@@ -76,6 +89,14 @@ export default async function ProfilePage() {
     {
       label: "Active walks",
       value: `${activeWalkCount ?? 0} live`,
+    },
+    {
+      label: "Following",
+      value: `${followingCount ?? 0} walkers`,
+    },
+    {
+      label: "Followers",
+      value: `${followersCount ?? 0} walkers`,
     },
   ];
 

@@ -1,17 +1,39 @@
 import { redirect } from "next/navigation";
 
+import { followWalker, unfollowWalker } from "@/app/map/actions";
 import { LiveLocationSync } from "@/components/map/live-location-sync";
 import { MapCanvasShell } from "@/components/map/map-canvas-shell";
 import { MapLiveView } from "@/components/map/map-live-view";
 import { appNavItems } from "@/components/navigation/app-nav-items";
 import { MobileBottomNav } from "@/components/navigation/mobile-bottom-nav";
-import { ButtonLink } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
+import { Notice } from "@/components/ui/notice";
 import { Pill } from "@/components/ui/pill";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { ensureProfile } from "@/lib/supabase/profiles";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function MapPage() {
+type MapPageProps = {
+  searchParams: Promise<{
+    followMessage?: string;
+    followError?: string;
+    mockWalker?: string;
+    mockFollow?: string;
+  }>;
+};
+
+const mockWalkerId = "mock-walker-dev";
+const fallbackMockCoordinates = {
+  latitude: 54.6872,
+  longitude: 25.2797,
+};
+const mockWalkTiming = {
+  startedAt: "2026-03-26T16:18:00.000Z",
+  expiresAt: "2026-03-26T17:18:00.000Z",
+};
+
+export default async function MapPage({ searchParams }: MapPageProps) {
+  const params = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -57,16 +79,26 @@ export default async function MapPage() {
         .select("id, display_name, username, city")
         .in("id", walkUserIds)
     : { data: [] };
+  const { data: currentFollows } = walkUserIds.length
+    ? await supabase
+        .from("follows")
+        .select("following_id")
+        .eq("follower_id", user.id)
+        .in("following_id", walkUserIds)
+    : { data: [] };
 
   const profileMap = new Map((visibleProfiles ?? []).map((item) => [item.id, item]));
+  const followedIds = new Set((currentFollows ?? []).map((item) => item.following_id));
 
-  const walkFeed = (visibleWalks ?? []).map((walk) => ({
+  const baseWalkFeed = (visibleWalks ?? []).map((walk) => ({
     ...walk,
     profile: profileMap.get(walk.user_id),
     isYou: walk.user_id === user.id,
+    isFollowed: followedIds.has(walk.user_id),
+    isMock: false,
   }));
 
-  const walkersWithCoordinates = walkFeed
+  const walkersWithCoordinates = baseWalkFeed
     .filter(
       (walk) =>
         typeof walk.last_latitude === "number" &&
@@ -86,6 +118,57 @@ export default async function MapPage() {
       longitude: walk.last_longitude as number,
       isYou: walk.isYou,
     }));
+
+  const isMockWalkerEnabled =
+    process.env.NODE_ENV !== "production" && params.mockWalker === "1";
+  const isMockFollowed = params.mockFollow === "1";
+  const anchorCoordinates = walkersWithCoordinates[0] ?? {
+    latitude: fallbackMockCoordinates.latitude,
+    longitude: fallbackMockCoordinates.longitude,
+  };
+
+  const mockWalk = isMockWalkerEnabled
+    ? {
+        id: mockWalkerId,
+        user_id: mockWalkerId,
+        title: "Evening park loop",
+        visibility: "public",
+        location_precision: "approximate",
+        started_at: mockWalkTiming.startedAt,
+        expires_at: mockWalkTiming.expiresAt,
+        last_latitude: anchorCoordinates.latitude + 0.008,
+        last_longitude: anchorCoordinates.longitude + 0.01,
+        profile: {
+          id: mockWalkerId,
+          display_name: "Test walker",
+          username: "test-walker",
+          city: profile?.city ?? "Nearby area",
+        },
+        isYou: false,
+        isFollowed: isMockFollowed,
+        isMock: true,
+      }
+    : null;
+
+  const walkFeed = mockWalk ? [mockWalk, ...baseWalkFeed] : baseWalkFeed;
+
+  const mapWalkers = mockWalk
+    ? [
+        {
+          id: mockWalk.id,
+          name: mockWalk.profile.display_name,
+          city: mockWalk.profile.city,
+          visibility: mockWalk.visibility,
+          precision: mockWalk.location_precision,
+          latitude: mockWalk.last_latitude,
+          longitude: mockWalk.last_longitude,
+          isYou: false,
+          isMock: true,
+          isFollowed: isMockFollowed,
+        },
+        ...walkersWithCoordinates,
+      ]
+    : walkersWithCoordinates;
 
   const walkerName = profile?.display_name ?? user.email ?? "walker";
   const mapToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
@@ -139,13 +222,21 @@ export default async function MapPage() {
             </div>
 
             <div className="mt-5 sm:hidden">
-              <ButtonLink
-                href="/dashboard#walk-setup"
-                variant="primary"
-                className="w-full px-4 py-3 text-center"
-              >
-                {activeWalk ? "Open live walk" : "Start walk"}
-              </ButtonLink>
+              <div className="grid gap-3">
+                <ButtonLink
+                  href="/dashboard#walk-setup"
+                  variant="primary"
+                  className="w-full px-4 py-3 text-center"
+                >
+                  {activeWalk ? "Open live walk" : "Start walk"}
+                </ButtonLink>
+                <ButtonLink
+                  href={params.mockWalker === "1" ? "/map" : "/map?mockWalker=1"}
+                  className="w-full px-4 py-3 text-center"
+                >
+                  {params.mockWalker === "1" ? "Hide test walker" : "Show test walker"}
+                </ButtonLink>
+              </div>
             </div>
 
             <div className="mt-5 hidden sm:flex sm:flex-wrap sm:gap-3">
@@ -161,6 +252,12 @@ export default async function MapPage() {
               </ButtonLink>
               <ButtonLink href="/profile" className="px-4 py-3 text-center">
                 Profile
+              </ButtonLink>
+              <ButtonLink
+                href={params.mockWalker === "1" ? "/map" : "/map?mockWalker=1"}
+                className="px-4 py-3 text-center"
+              >
+                {params.mockWalker === "1" ? "Hide test walker" : "Show test walker"}
               </ButtonLink>
             </div>
           </div>
@@ -184,9 +281,18 @@ export default async function MapPage() {
       </SurfaceCard>
 
       <section className="mt-4 flex flex-1 flex-col gap-4 sm:mt-6 sm:gap-6">
+        {(params.followMessage || params.followError) && (
+          <SurfaceCard className="p-5 sm:p-6">
+            {params.followMessage ? <Notice>{params.followMessage}</Notice> : null}
+            {params.followError ? (
+              <Notice variant="error">{params.followError}</Notice>
+            ) : null}
+          </SurfaceCard>
+        )}
+
         {hasToken ? (
           <SurfaceCard className="overflow-hidden p-0">
-            <MapLiveView token={mapToken} walkers={walkersWithCoordinates} />
+            <MapLiveView token={mapToken} walkers={mapWalkers} />
           </SurfaceCard>
         ) : (
           <MapCanvasShell hasActiveWalk={Boolean(activeWalk)} hasToken={hasToken} />
@@ -292,6 +398,7 @@ export default async function MapPage() {
               {walkFeed.map((walk) => (
                 <div
                   key={walk.id}
+                  id={`walker-${walk.id}`}
                   className="rounded-[24px] border border-white/70 bg-white/65 p-4"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -310,8 +417,51 @@ export default async function MapPage() {
                     <div className="flex flex-wrap gap-2">
                       <Pill>{walk.visibility}</Pill>
                       <Pill>{walk.location_precision}</Pill>
+                      {walk.isMock ? <Pill>test</Pill> : null}
                     </div>
                   </div>
+
+                  {walk.isMock ? (
+                    <div className="mt-4 flex flex-wrap items-center gap-3">
+                      <ButtonLink
+                        href={
+                          walk.isFollowed
+                            ? "/map?mockWalker=1"
+                            : "/map?mockWalker=1&mockFollow=1"
+                        }
+                        variant={walk.isFollowed ? "secondary" : "primary"}
+                        className="px-4 py-2.5"
+                      >
+                        {walk.isFollowed ? "Following" : "Follow"}
+                      </ButtonLink>
+                      <p className="text-xs text-[var(--text-soft)]">
+                        Dev test only
+                      </p>
+                    </div>
+                  ) : null}
+                  {!walk.isYou && !walk.isMock ? (
+                    <div className="mt-4">
+                      <form action={walk.isFollowed ? unfollowWalker : followWalker}>
+                        <input type="hidden" name="followingId" value={walk.user_id} />
+                        <Button
+                          type="submit"
+                          variant={walk.isFollowed ? "secondary" : "primary"}
+                          className="px-4 py-2.5"
+                        >
+                          {walk.isFollowed ? "Following" : "Follow"}
+                        </Button>
+                      </form>
+                    </div>
+                  ) : null}
+                  {walk.isMock ? (
+                    <div className="mt-4 rounded-[18px] border border-dashed border-[rgba(123,167,209,0.28)] bg-white/42 px-4 py-3">
+                      <p className="text-sm text-[var(--text-body)]">
+                        Dev-only test walker. Useful for solo map testing, but it
+                        uses a local follow toggle instead of a real Supabase follow
+                        relationship.
+                      </p>
+                    </div>
+                  ) : null}
 
                   <div className="mt-3 grid gap-3 sm:grid-cols-3">
                     <div>

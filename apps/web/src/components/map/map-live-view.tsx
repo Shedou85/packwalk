@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { useCallback, useMemo, useRef, useState } from "react";
 import Map, { Marker, Popup } from "react-map-gl/mapbox";
 import type { MapRef } from "react-map-gl/mapbox";
 
@@ -15,6 +16,8 @@ type WalkerMarker = {
   latitude: number;
   longitude: number;
   isYou: boolean;
+  isMock?: boolean;
+  isFollowed?: boolean;
 };
 
 type MapLiveViewProps = {
@@ -29,8 +32,12 @@ const fallbackCenter = {
 };
 
 export function MapLiveView({ token, walkers }: MapLiveViewProps) {
-  const [selectedId, setSelectedId] = useState<string | null>(walkers[0]?.id ?? null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const mapRef = useRef<MapRef>(null);
+  // Guard: Mapbox can fire a canvas click event even when the click originated
+  // on an HTML marker overlay. This ref lets handleMapClick skip that event so
+  // the marker click that just opened the popup isn't immediately undone.
+  const markerClickedRef = useRef(false);
 
   const initialViewState = useMemo(() => {
     if (!walkers.length) {
@@ -49,8 +56,24 @@ export function MapLiveView({ token, walkers }: MapLiveViewProps) {
     };
   }, [walkers]);
 
-  const selectedWalker =
-    walkers.find((walker) => walker.id === selectedId) ?? walkers[0] ?? null;
+  const selectedWalker = walkers.find((walker) => walker.id === selectedId) ?? null;
+
+  const handleMarkerClick = useCallback(
+    (event: React.MouseEvent, walkerId: string) => {
+      event.stopPropagation();
+      markerClickedRef.current = true;
+      setSelectedId(walkerId);
+    },
+    [],
+  );
+
+  const handleMapClick = useCallback(() => {
+    if (markerClickedRef.current) {
+      markerClickedRef.current = false;
+      return;
+    }
+    setSelectedId(null);
+  }, []);
 
   // Keep Mapbox camera uncontrolled during interaction.
   // Reintroducing `viewState` + `onMove` here would put camera movement behind
@@ -71,6 +94,7 @@ export function MapLiveView({ token, walkers }: MapLiveViewProps) {
         initialViewState={initialViewState}
         mapStyle="mapbox://styles/mapbox/streets-v12"
         style={{ width: "100%", height: "100%" }}
+        onClick={handleMapClick}
       >
         {walkers.map((walker) => (
           <Marker
@@ -81,7 +105,11 @@ export function MapLiveView({ token, walkers }: MapLiveViewProps) {
           >
             <button
               type="button"
-              onClick={() => setSelectedId(walker.id)}
+              onMouseDown={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+              }}
+              onClick={(event) => handleMarkerClick(event, walker.id)}
               className={cn(
                 "relative flex h-16 w-16 cursor-pointer items-center justify-center bg-transparent",
                 selectedId === walker.id ? "scale-105" : "",
@@ -116,6 +144,7 @@ export function MapLiveView({ token, walkers }: MapLiveViewProps) {
             longitude={selectedWalker.longitude}
             anchor="top"
             closeButton={false}
+            closeOnClick={false}
             offset={18}
             onClose={() => setSelectedId(null)}
             className="[&_.mapboxgl-popup-content]:rounded-[22px] [&_.mapboxgl-popup-content]:border [&_.mapboxgl-popup-content]:border-white/70 [&_.mapboxgl-popup-content]:bg-white/88 [&_.mapboxgl-popup-content]:p-0 [&_.mapboxgl-popup-content]:shadow-[0_20px_40px_rgba(35,60,89,0.18)] [&_.mapboxgl-popup-tip]:hidden"
@@ -135,7 +164,41 @@ export function MapLiveView({ token, walkers }: MapLiveViewProps) {
                 <span className="rounded-full border border-[rgba(123,167,209,0.22)] bg-white/78 px-2.5 py-1">
                   {selectedWalker.precision}
                 </span>
+                {selectedWalker.isMock ? (
+                  <span className="rounded-full border border-[rgba(123,167,209,0.22)] bg-white/78 px-2.5 py-1">
+                    test
+                  </span>
+                ) : null}
               </div>
+              {!selectedWalker.isYou ? (
+                <div className="mt-4">
+                  {selectedWalker.isMock ? (
+                    <Link
+                      href={
+                        selectedWalker.isFollowed
+                          ? "/map?mockWalker=1"
+                          : "/map?mockWalker=1&mockFollow=1"
+                      }
+                      className={cn(
+                        "inline-flex cursor-pointer rounded-full px-4 py-2 text-xs font-medium transition-[transform,box-shadow,background-color]",
+                        selectedWalker.isFollowed
+                          ? "border border-[rgba(123,167,209,0.28)] bg-white/65 text-[var(--text-strong)] hover:bg-white/80"
+                          : "bg-[linear-gradient(135deg,#4da8da_0%,#256ea8_100%)] text-white shadow-[0_10px_24px_rgba(77,168,218,0.28)] hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(77,168,218,0.32)]",
+                      )}
+                    >
+                      {selectedWalker.isFollowed ? "Following" : "Follow"}
+                    </Link>
+                  ) : (
+                    <Link
+                      href={`#walker-${selectedWalker.id}`}
+                      onClick={() => setSelectedId(null)}
+                      className="inline-flex cursor-pointer rounded-full border border-[rgba(123,167,209,0.28)] bg-white/65 px-4 py-2 text-xs font-medium text-[var(--text-strong)] transition-[transform,box-shadow,background-color] hover:bg-white/80"
+                    >
+                      Open details
+                    </Link>
+                  )}
+                </div>
+              ) : null}
             </div>
           </Popup>
         ) : null}
