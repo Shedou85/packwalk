@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { signOut } from "@/app/auth/actions";
 import { appNavItems } from "@/components/navigation/app-nav-items";
 import { MobileBottomNav } from "@/components/navigation/mobile-bottom-nav";
+import { ProfileConnectionList } from "@/components/profile/profile-connection-list";
 import { ProfileFactGrid } from "@/components/profile/profile-fact-grid";
 import { ProfileShortcutCard } from "@/components/profile/profile-shortcut-card";
 import { Button, ButtonLink } from "@/components/ui/button";
@@ -34,6 +35,8 @@ export default async function ProfilePage() {
     { count: activeWalkCount },
     { count: followingCount },
     { count: followersCount },
+    { data: followingRows },
+    { data: followerRows },
   ] = await Promise.all([
     supabase
       .from("dogs")
@@ -52,7 +55,65 @@ export default async function ProfilePage() {
       .from("follows")
       .select("*", { count: "exact", head: true })
       .eq("following_id", user.id),
+    supabase
+      .from("follows")
+      .select("following_id, created_at")
+      .eq("follower_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(8),
+    supabase
+      .from("follows")
+      .select("follower_id, created_at")
+      .eq("following_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(8),
   ]);
+
+  const connectionProfileIds = [
+    ...new Set([
+      ...(followingRows ?? []).map((row) => row.following_id),
+      ...(followerRows ?? []).map((row) => row.follower_id),
+    ]),
+  ];
+
+  const { data: connectionProfiles } = connectionProfileIds.length
+    ? await supabase
+        .from("profiles")
+        .select("id, display_name, username, city")
+        .in("id", connectionProfileIds)
+    : { data: [] };
+
+  const connectionProfileMap = new Map(
+    (connectionProfiles ?? []).map((item) => [item.id, item]),
+  );
+
+  const followingItems = (followingRows ?? []).map((row) => {
+    const connectionProfile = connectionProfileMap.get(row.following_id);
+
+    return {
+      id: row.following_id,
+      title:
+        connectionProfile?.display_name ??
+        connectionProfile?.username ??
+        "Walker",
+      subtitle: connectionProfile?.city ?? "City not set",
+      meta: "following",
+    };
+  });
+
+  const followerItems = (followerRows ?? []).map((row) => {
+    const connectionProfile = connectionProfileMap.get(row.follower_id);
+
+    return {
+      id: row.follower_id,
+      title:
+        connectionProfile?.display_name ??
+        connectionProfile?.username ??
+        "Walker",
+      subtitle: connectionProfile?.city ?? "City not set",
+      meta: "follower",
+    };
+  });
 
   const accountFacts = [
     {
@@ -192,6 +253,24 @@ export default async function ProfilePage() {
             description="These defaults shape how a fresh walk behaves until we add editable settings."
             facts={preferences}
             badge="Live ready"
+          />
+        </div>
+
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-[1fr_1fr]">
+          <ProfileConnectionList
+            title="Following"
+            description="People you already keep on your map radar."
+            badge={`${followingCount ?? 0}`}
+            emptyText="You are not following anyone yet. Follow walkers from the map to build your nearby circle."
+            items={followingItems}
+          />
+
+          <ProfileConnectionList
+            title="Followers"
+            description="People who can find you faster when your walk is visible."
+            badge={`${followersCount ?? 0}`}
+            emptyText="No followers yet. Once someone follows you, they will show up here."
+            items={followerItems}
           />
         </div>
 

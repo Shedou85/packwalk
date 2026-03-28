@@ -5,6 +5,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import Map, { Marker, Popup } from "react-map-gl/mapbox";
 import type { MapRef } from "react-map-gl/mapbox";
 
+import { followWalker, unfollowWalker } from "@/app/map/actions";
 import { cn } from "@/lib/cn";
 
 type WalkerMarker = {
@@ -31,12 +32,12 @@ const fallbackCenter = {
   zoom: 11,
 };
 
+const popupActionClass =
+  "inline-flex w-full cursor-pointer items-center justify-center rounded-full px-3 py-2 text-[11px] font-medium transition-[transform,box-shadow,background-color] hover:-translate-y-0.5";
+
 export function MapLiveView({ token, walkers }: MapLiveViewProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const mapRef = useRef<MapRef>(null);
-  // Guard: Mapbox can fire a canvas click event even when the click originated
-  // on an HTML marker overlay. This ref lets handleMapClick skip that event so
-  // the marker click that just opened the popup isn't immediately undone.
   const markerClickedRef = useRef(false);
 
   const initialViewState = useMemo(() => {
@@ -72,6 +73,7 @@ export function MapLiveView({ token, walkers }: MapLiveViewProps) {
       markerClickedRef.current = false;
       return;
     }
+
     setSelectedId(null);
   }, []);
 
@@ -142,63 +144,136 @@ export function MapLiveView({ token, walkers }: MapLiveViewProps) {
           <Popup
             latitude={selectedWalker.latitude}
             longitude={selectedWalker.longitude}
-            anchor="top"
+            anchor="bottom"
             closeButton={false}
             closeOnClick={false}
-            offset={18}
+            offset={14}
             onClose={() => setSelectedId(null)}
-            className="[&_.mapboxgl-popup-content]:rounded-[22px] [&_.mapboxgl-popup-content]:border [&_.mapboxgl-popup-content]:border-white/70 [&_.mapboxgl-popup-content]:bg-white/88 [&_.mapboxgl-popup-content]:p-0 [&_.mapboxgl-popup-content]:shadow-[0_20px_40px_rgba(35,60,89,0.18)] [&_.mapboxgl-popup-tip]:hidden"
+            className="[&_.mapboxgl-popup-content]:max-w-[min(168px,calc(100vw-76px))] [&_.mapboxgl-popup-content]:overflow-hidden [&_.mapboxgl-popup-content]:rounded-[20px] [&_.mapboxgl-popup-content]:border [&_.mapboxgl-popup-content]:border-white/72 [&_.mapboxgl-popup-content]:bg-[linear-gradient(180deg,rgba(255,255,255,0.95)_0%,rgba(243,248,255,0.9)_100%)] [&_.mapboxgl-popup-content]:p-0 [&_.mapboxgl-popup-content]:shadow-[0_16px_32px_rgba(35,60,89,0.15)] [&_.mapboxgl-popup-content]:backdrop-blur-xl [&_.mapboxgl-popup-tip]:hidden sm:[&_.mapboxgl-popup-content]:max-w-[208px]"
           >
-            <div className="min-w-[180px] p-4">
-              <p className="text-sm font-semibold text-[var(--text-strong)]">
-                {selectedWalker.name}
-                {selectedWalker.isYou ? " · You" : ""}
-              </p>
-              <p className="mt-1 text-xs text-[var(--text-soft)]">
-                {selectedWalker.city}
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-body)]">
-                <span className="rounded-full border border-[rgba(123,167,209,0.22)] bg-white/78 px-2.5 py-1">
-                  {selectedWalker.visibility}
-                </span>
-                <span className="rounded-full border border-[rgba(123,167,209,0.22)] bg-white/78 px-2.5 py-1">
-                  {selectedWalker.precision}
-                </span>
-                {selectedWalker.isMock ? (
-                  <span className="rounded-full border border-[rgba(123,167,209,0.22)] bg-white/78 px-2.5 py-1">
-                    test
-                  </span>
-                ) : null}
+            <div className="w-[min(168px,calc(100vw-76px))] sm:w-[208px]">
+              <div className="relative border-b border-white/62 bg-[linear-gradient(180deg,rgba(255,255,255,0.48)_0%,rgba(255,255,255,0.12)_100%)] px-3 py-2.5 text-center">
+                <div className="min-w-0 pr-5">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--accent-strong)]">
+                    Live walker
+                  </p>
+                  <p className="mt-1 truncate text-[14px] font-semibold text-[var(--text-strong)]">
+                    {selectedWalker.name}
+                    {selectedWalker.isYou ? " · You" : ""}
+                  </p>
+                  <p className="mt-1 text-[11px] text-[var(--text-soft)]">
+                    {selectedWalker.city}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedId(null)}
+                  className="absolute right-2 top-2 inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded-full border border-white/72 bg-white/72 text-[var(--text-soft)] transition-[background-color,transform] hover:-translate-y-0.5 hover:bg-white"
+                  aria-label="Close walker popup"
+                >
+                  <svg
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    className="h-4 w-4"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M6 6L14 14"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M14 6L6 14"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </button>
               </div>
-              {!selectedWalker.isYou ? (
-                <div className="mt-4">
+
+              <div className="space-y-2.5 px-2.5 py-2.5 text-center">
+                <div className="flex flex-wrap justify-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-body)]">
+                  <span className="rounded-full border border-[rgba(123,167,209,0.2)] bg-white/82 px-2.5 py-1">
+                    {selectedWalker.visibility}
+                  </span>
+                  <span className="rounded-full border border-[rgba(123,167,209,0.2)] bg-white/82 px-2.5 py-1">
+                    {selectedWalker.precision}
+                  </span>
                   {selectedWalker.isMock ? (
-                    <Link
-                      href={
-                        selectedWalker.isFollowed
-                          ? "/map?mockWalker=1"
-                          : "/map?mockWalker=1&mockFollow=1"
-                      }
-                      className={cn(
-                        "inline-flex cursor-pointer rounded-full px-4 py-2 text-xs font-medium transition-[transform,box-shadow,background-color]",
-                        selectedWalker.isFollowed
-                          ? "border border-[rgba(123,167,209,0.28)] bg-white/65 text-[var(--text-strong)] hover:bg-white/80"
-                          : "bg-[linear-gradient(135deg,#4da8da_0%,#256ea8_100%)] text-white shadow-[0_10px_24px_rgba(77,168,218,0.28)] hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(77,168,218,0.32)]",
-                      )}
-                    >
-                      {selectedWalker.isFollowed ? "Following" : "Follow"}
-                    </Link>
-                  ) : (
+                    <span className="rounded-full border border-[rgba(123,167,209,0.2)] bg-white/82 px-2.5 py-1">
+                      test
+                    </span>
+                  ) : null}
+                </div>
+
+                {!selectedWalker.isYou ? (
+                  <div className="grid gap-2">
+                    {selectedWalker.isMock ? (
+                      <Link
+                        href={
+                          selectedWalker.isFollowed
+                            ? "/map?mockWalker=1"
+                            : "/map?mockWalker=1&mockFollow=1"
+                        }
+                        className={cn(
+                          popupActionClass,
+                          selectedWalker.isFollowed
+                            ? "border border-[rgba(123,167,209,0.28)] bg-white/70 text-[var(--text-strong)] hover:bg-white/85"
+                            : "bg-[linear-gradient(135deg,#4da8da_0%,#256ea8_100%)] text-white shadow-[0_10px_24px_rgba(77,168,218,0.24)] hover:shadow-[0_12px_24px_rgba(77,168,218,0.3)]",
+                        )}
+                      >
+                        {selectedWalker.isFollowed ? "Following" : "Follow"}
+                      </Link>
+                    ) : (
+                      <form
+                        action={selectedWalker.isFollowed ? unfollowWalker : followWalker}
+                      >
+                        <input
+                          type="hidden"
+                          name="followingId"
+                          value={selectedWalker.id}
+                        />
+                        <button
+                          type="submit"
+                          className={cn(
+                            popupActionClass,
+                            selectedWalker.isFollowed
+                              ? "border border-[rgba(123,167,209,0.28)] bg-white/70 text-[var(--text-strong)] hover:bg-white/85"
+                              : "bg-[linear-gradient(135deg,#4da8da_0%,#256ea8_100%)] text-white shadow-[0_10px_24px_rgba(77,168,218,0.24)] hover:shadow-[0_12px_24px_rgba(77,168,218,0.3)]",
+                          )}
+                        >
+                          {selectedWalker.isFollowed ? "Following" : "Follow"}
+                        </button>
+                      </form>
+                    )}
+
                     <Link
                       href={`#walker-${selectedWalker.id}`}
                       onClick={() => setSelectedId(null)}
-                      className="inline-flex cursor-pointer rounded-full border border-[rgba(123,167,209,0.28)] bg-white/65 px-4 py-2 text-xs font-medium text-[var(--text-strong)] transition-[transform,box-shadow,background-color] hover:bg-white/80"
+                      className={cn(
+                        popupActionClass,
+                        "border border-[rgba(123,167,209,0.28)] bg-white/62 text-[var(--text-strong)] hover:bg-white/80",
+                      )}
                     >
                       Open details
                     </Link>
-                  )}
-                </div>
-              ) : null}
+                  </div>
+                ) : (
+                  <div className="rounded-[16px] border border-dashed border-[rgba(123,167,209,0.28)] bg-white/42 px-3 py-2.5">
+                    <p className="text-xs leading-5 text-[var(--text-body)]">
+                      This is your live marker.
+                    </p>
+                  </div>
+                )}
+
+                {selectedWalker.isMock ? (
+                  <p className="text-[10px] leading-4 text-[var(--text-soft)]">
+                    Dev-only test walker.
+                  </p>
+                ) : null}
+              </div>
             </div>
           </Popup>
         ) : null}

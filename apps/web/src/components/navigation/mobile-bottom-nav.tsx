@@ -8,7 +8,7 @@ import { cn } from "@/lib/cn";
 type MobileBottomNavItem = {
   href: string;
   label: string;
-  icon: "home" | "map" | "walk" | "profile";
+  icon: "home" | "map" | "walk" | "groups" | "profile";
 };
 
 type MobileBottomNavProps = {
@@ -133,6 +133,41 @@ function NavIcon({ icon }: { icon: MobileBottomNavItem["icon"] }) {
         />
         <path
           d="M9 7V19"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+
+  if (icon === "groups") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" className={iconClasses} aria-hidden="true">
+        <path
+          d="M9 12C10.66 12 12 10.66 12 9C12 7.34 10.66 6 9 6C7.34 6 6 7.34 6 9C6 10.66 7.34 12 9 12Z"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M3 20C3.6 17.8 5.5 16.2 7.8 16H10.2C12.5 16.2 14.4 17.8 15 20"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M16 6.2C17.46 6.65 18.5 7.96 18.5 9.5C18.5 11.04 17.46 12.35 16 12.8"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M17.5 16.2C19.3 16.7 20.7 18.1 21 20"
           stroke="currentColor"
           strokeWidth="1.8"
           strokeLinecap="round"
