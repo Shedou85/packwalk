@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { notifyFollow } from "@/lib/supabase/notifications";
 import { createClient } from "@/lib/supabase/server";
 
 const getText = (value: FormDataEntryValue | null) =>
@@ -32,6 +33,19 @@ export async function followWalker(formData: FormData) {
   if (error) {
     redirect(`/map?followError=${encodeURIComponent(error.message)}`);
   }
+
+  // Fetch follower's display name for the notification (best-effort, don't block on failure)
+  const { data: followerProfile } = await supabase
+    .from("profiles")
+    .select("display_name, username")
+    .eq("id", user.id)
+    .single();
+
+  await notifyFollow({
+    followerId: user.id,
+    followerDisplayName: followerProfile?.display_name ?? followerProfile?.username ?? "Someone",
+    followedUserId: followingId,
+  });
 
   revalidatePath("/map");
   revalidatePath("/profile");

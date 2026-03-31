@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { signOut } from "@/app/auth/actions";
-import { appNavItems } from "@/components/navigation/app-nav-items";
-import { MobileBottomNav } from "@/components/navigation/mobile-bottom-nav";
+import { AppNav } from "@/components/navigation/app-nav";
 import { ProfileConnectionList } from "@/components/profile/profile-connection-list";
 import { ProfileFactGrid } from "@/components/profile/profile-fact-grid";
 import { ProfileShortcutCard } from "@/components/profile/profile-shortcut-card";
@@ -308,7 +307,7 @@ export default async function ProfilePage() {
         </div>
       </section>
 
-      <MobileBottomNav items={appNavItems} />
+      <AppNav />
     </main>
   );
 }

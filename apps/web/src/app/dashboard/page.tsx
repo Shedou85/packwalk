@@ -8,8 +8,7 @@ import {
 } from "@/app/dashboard/actions";
 import { DashboardActionTile } from "@/components/dashboard/dashboard-action-tile";
 import { DashboardStatChip } from "@/components/dashboard/dashboard-stat-chip";
-import { appNavItems } from "@/components/navigation/app-nav-items";
-import { MobileBottomNav } from "@/components/navigation/mobile-bottom-nav";
+import { AppNav } from "@/components/navigation/app-nav";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { CompactSelect } from "@/components/ui/compact-select";
 import { Field, TextInput } from "@/components/ui/field";
@@ -507,7 +506,7 @@ export default async function DashboardPage({
         </div>
       </section>
 
-      <MobileBottomNav items={appNavItems} />
+      <AppNav />
     </main>
   );
 }

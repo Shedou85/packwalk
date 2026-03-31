@@ -1,8 +1,7 @@
 import { ButtonLink } from "@/components/ui/button";
 import { FeatureCard } from "@/components/ui/feature-card";
 import { InfoBlock } from "@/components/ui/info-block";
-import { appNavItems } from "@/components/navigation/app-nav-items";
-import { MobileBottomNav } from "@/components/navigation/mobile-bottom-nav";
+import { AppNav } from "@/components/navigation/app-nav";
 import { Pill } from "@/components/ui/pill";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { createClient } from "@/lib/supabase/server";
@@ -150,7 +149,7 @@ export default async function Home() {
       </section>
 
       {user ? (
-        <MobileBottomNav items={appNavItems} />
+        <AppNav />
       ) : (
         <div className="sticky bottom-4 mt-auto pt-2 sm:hidden">
           <SurfaceCard strong className="p-3">

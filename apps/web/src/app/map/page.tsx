@@ -4,8 +4,7 @@ import { followWalker, unfollowWalker } from "@/app/map/actions";
 import { LiveLocationSync } from "@/components/map/live-location-sync";
 import { MapCanvasShell } from "@/components/map/map-canvas-shell";
 import { MapLiveView } from "@/components/map/map-live-view";
-import { appNavItems } from "@/components/navigation/app-nav-items";
-import { MobileBottomNav } from "@/components/navigation/mobile-bottom-nav";
+import { AppNav } from "@/components/navigation/app-nav";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
 import { Pill } from "@/components/ui/pill";
@@ -511,7 +510,7 @@ export default async function MapPage({ searchParams }: MapPageProps) {
         </SurfaceCard>
       </section>
 
-      <MobileBottomNav items={appNavItems} />
+      <AppNav />
     </main>
   );
 }

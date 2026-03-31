@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { notifyGroupJoin } from "@/lib/supabase/notifications";
 import { createClient } from "@/lib/supabase/server";
 
 const groupSchema = z.object({
@@ -14,6 +15,22 @@ const groupSchema = z.object({
 
 const getText = (value: FormDataEntryValue | null) =>
   typeof value === "string" ? value : "";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function sendJoinNotification(supabase: any, joinerId: string, groupId: string) {
+  const [{ data: joinerProfile }, { data: group }] = await Promise.all([
+    supabase.from("profiles").select("display_name, username").eq("id", joinerId).single(),
+    supabase.from("groups").select("name, owner_id").eq("id", groupId).single(),
+  ]);
+  if (!group) return;
+  await notifyGroupJoin({
+    joinerId,
+    joinerDisplayName: joinerProfile?.display_name ?? joinerProfile?.username ?? "Someone",
+    groupOwnerId: group.owner_id,
+    groupId,
+    groupName: group.name,
+  });
+}
 
 export async function createGroup(formData: FormData) {
   const supabase = await createClient();
@@ -97,6 +114,7 @@ export async function joinGroup(formData: FormData) {
     .select("group_id");
 
   if (updated && updated.length > 0) {
+    await sendJoinNotification(supabase, user.id, groupId);
     revalidatePath("/groups");
     revalidatePath(`/groups/${groupId}`);
     redirect(`/groups/${groupId}?message=Joined group.`);
@@ -119,6 +137,7 @@ export async function joinGroup(formData: FormData) {
     redirect(`/groups/${groupId}?error=${encodeURIComponent(msg)}`);
   }
 
+  await sendJoinNotification(supabase, user.id, groupId);
   revalidatePath("/groups");
   revalidatePath(`/groups/${groupId}`);
   redirect(`/groups/${groupId}?message=Joined group.`);

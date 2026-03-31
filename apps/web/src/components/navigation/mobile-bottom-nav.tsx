@@ -8,7 +8,8 @@ import { cn } from "@/lib/cn";
 type MobileBottomNavItem = {
   href: string;
   label: string;
-  icon: "home" | "map" | "walk" | "groups" | "profile";
+  icon: "home" | "map" | "walk" | "groups" | "profile" | "notifications";
+  badge?: number;
 };
 
 type MobileBottomNavProps = {
@@ -50,13 +51,18 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
                 >
                   <span
                     className={cn(
-                      "flex h-9 w-9 items-center justify-center rounded-full border transition-[background-color,border-color]",
+                      "relative flex h-9 w-9 items-center justify-center rounded-full border transition-[background-color,border-color]",
                       active
                         ? "border-[rgba(77,168,218,0.24)] bg-white/78"
                         : "border-[rgba(109,150,189,0.2)] bg-[rgba(255,255,255,0.34)]",
                     )}
                   >
                     <NavIcon icon={item.icon} />
+                    {item.badge && item.badge > 0 ? (
+                      <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--accent-strong)] px-1 text-[9px] font-bold leading-none text-white">
+                        {item.badge > 99 ? "99+" : item.badge}
+                      </span>
+                    ) : null}
                   </span>
                   <span className="mt-1.5 text-[11px] font-semibold uppercase tracking-[0.12em]">
                     {item.label}
@@ -168,6 +174,34 @@ function NavIcon({ icon }: { icon: MobileBottomNavItem["icon"] }) {
         />
         <path
           d="M17.5 16.2C19.3 16.7 20.7 18.1 21 20"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+
+  if (icon === "notifications") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" className={iconClasses} aria-hidden="true">
+        <path
+          d="M12 22C13.1 22 14 21.1 14 20H10C10 21.1 10.9 22 12 22Z"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M12 4C12 4 7 5.5 7 11.5V15.5L5 17.5H19L17 15.5V11.5C17 5.5 12 4 12 4Z"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M12 4V2"
           stroke="currentColor"
           strokeWidth="1.8"
           strokeLinecap="round"
