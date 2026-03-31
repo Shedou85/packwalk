@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Map, { Marker, Popup } from "react-map-gl/mapbox";
 import type { MapRef } from "react-map-gl/mapbox";
 
@@ -37,8 +37,47 @@ const popupActionClass =
 
 export function MapLiveView({ token, walkers }: MapLiveViewProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [liveUserPosition, setLiveUserPosition] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
   const mapRef = useRef<MapRef>(null);
   const markerClickedRef = useRef(false);
+
+  useEffect(() => {
+    if (!("geolocation" in navigator)) return;
+
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        setLiveUserPosition({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
+      },
+      () => {
+        // Silently ignore — map still works without live tracking
+      },
+      { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 },
+    );
+
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+    };
+  }, []);
+
+  // Merge live browser position into the "You" marker so it updates in real-time
+  // without waiting for a Supabase round-trip and page reload.
+  const displayWalkers = useMemo(
+    () =>
+      liveUserPosition
+        ? walkers.map((w) =>
+            w.isYou
+              ? { ...w, latitude: liveUserPosition.latitude, longitude: liveUserPosition.longitude }
+              : w,
+          )
+        : walkers,
+    [walkers, liveUserPosition],
+  );
 
   const initialViewState = useMemo(() => {
     if (!walkers.length) {
@@ -57,7 +96,7 @@ export function MapLiveView({ token, walkers }: MapLiveViewProps) {
     };
   }, [walkers]);
 
-  const selectedWalker = walkers.find((walker) => walker.id === selectedId) ?? null;
+  const selectedWalker = displayWalkers.find((walker) => walker.id === selectedId) ?? null;
 
   const handleMarkerClick = useCallback(
     (event: React.MouseEvent, walkerId: string) => {
@@ -81,11 +120,18 @@ export function MapLiveView({ token, walkers }: MapLiveViewProps) {
   // Reintroducing `viewState` + `onMove` here would put camera movement behind
   // React state updates and can make markers appear detached from the map while
   // panning or zooming. Recenter actions should use `mapRef` methods instead.
-  const recenterToWalkers = () => {
-    mapRef.current?.flyTo({
-      center: [initialViewState.longitude, initialViewState.latitude],
-      zoom: initialViewState.zoom,
-    });
+  const recenterToUser = () => {
+    if (liveUserPosition) {
+      mapRef.current?.flyTo({
+        center: [liveUserPosition.longitude, liveUserPosition.latitude],
+        zoom: 15,
+      });
+    } else {
+      mapRef.current?.flyTo({
+        center: [initialViewState.longitude, initialViewState.latitude],
+        zoom: initialViewState.zoom,
+      });
+    }
   };
 
   return (
@@ -98,7 +144,7 @@ export function MapLiveView({ token, walkers }: MapLiveViewProps) {
         style={{ width: "100%", height: "100%" }}
         onClick={handleMapClick}
       >
-        {walkers.map((walker) => (
+        {displayWalkers.map((walker) => (
           <Marker
             key={walker.id}
             latitude={walker.latitude}
@@ -281,7 +327,7 @@ export function MapLiveView({ token, walkers }: MapLiveViewProps) {
 
       <button
         type="button"
-        onClick={recenterToWalkers}
+        onClick={recenterToUser}
         className="absolute right-4 top-4 z-10 inline-flex cursor-pointer items-center gap-2 rounded-full border border-white/72 bg-white/88 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-strong)] shadow-[0_14px_28px_rgba(35,60,89,0.16)] backdrop-blur-md transition-[transform,box-shadow,background-color] hover:-translate-y-0.5 hover:bg-white"
       >
         <svg
@@ -325,7 +371,7 @@ export function MapLiveView({ token, walkers }: MapLiveViewProps) {
         Center
       </button>
 
-      {!walkers.length ? (
+      {!displayWalkers.length ? (
         <div className="absolute inset-x-4 bottom-4 rounded-[24px] border border-white/70 bg-white/72 p-4 shadow-[0_20px_44px_rgba(44,72,102,0.14)] backdrop-blur-xl">
           <p className="text-sm font-semibold text-[var(--text-strong)]">
             Waiting for live walkers
