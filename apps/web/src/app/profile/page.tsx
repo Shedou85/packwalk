@@ -183,16 +183,13 @@ export default async function ProfilePage() {
           <ButtonLink href="/dashboard" className="px-4 py-2">
             Dashboard
           </ButtonLink>
-          <ButtonLink href="/" className="px-4 py-2">
-            Home
-          </ButtonLink>
           <form action={signOut}>
             <Button className="px-4 py-2">Sign out</Button>
           </form>
         </div>
       </SurfaceCard>
 
-      <div className="mt-4 sm:hidden">
+      <div className="mt-4 flex flex-col gap-3 sm:hidden">
         <ButtonLink
           href="/dashboard#walk-setup"
           variant="primary"
@@ -200,6 +197,9 @@ export default async function ProfilePage() {
         >
           {activeWalkCount ? "Open live walk" : "Start walk"}
         </ButtonLink>
+        <form action={signOut}>
+          <Button className="w-full px-4 py-3">Sign out</Button>
+        </form>
       </div>
 
       <section className="mt-4 flex flex-1 flex-col gap-4 sm:mt-6 sm:gap-6">
@@ -210,11 +210,10 @@ export default async function ProfilePage() {
                 Profile hub
               </p>
               <h2 className="mt-3 text-xl font-semibold text-[var(--text-strong)] sm:text-2xl">
-                Keep account details out of the way, but close when you need them.
+                Your account, privacy settings, and connections.
               </h2>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--text-body)]">
-                This space now holds your identity, visibility defaults, and quick
-                shortcuts so the dashboard can stay focused on going live and moving.
+                Manage your identity, visibility defaults, and the people you walk with.
               </p>
             </div>
 
@@ -242,14 +241,14 @@ export default async function ProfilePage() {
         <div className="grid gap-4 sm:gap-6 lg:grid-cols-[1fr_1fr]">
           <ProfileFactGrid
             title="Account"
-            description="Your identity block stays here so the main dashboard can focus on motion, not setup."
+            description="Your personal details and identity."
             facts={accountFacts}
             badge="Ready"
           />
 
           <ProfileFactGrid
             title="Privacy"
-            description="These defaults shape how a fresh walk behaves until we add editable settings."
+            description="Default settings applied to each new walk session."
             facts={preferences}
             badge="Live ready"
           />
