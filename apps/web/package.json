@@ -8,6 +8,10 @@
     "start": "next start",
     "lint": "eslint ."
   },
+  "optionalDependencies": {
+    "@tailwindcss/oxide-linux-x64-gnu": "^4.2.2",
+    "lightningcss-linux-x64-gnu": "^1.32.0"
+  },
   "dependencies": {
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.100.0",
