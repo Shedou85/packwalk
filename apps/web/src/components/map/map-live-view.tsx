@@ -89,7 +89,7 @@ export function MapLiveView({ token, walkers }: MapLiveViewProps) {
   };
 
   return (
-    <div className="relative h-[360px] w-full overflow-hidden sm:h-[420px]">
+    <div className="relative h-full w-full overflow-hidden">
       <Map
         ref={mapRef}
         mapboxAccessToken={token}

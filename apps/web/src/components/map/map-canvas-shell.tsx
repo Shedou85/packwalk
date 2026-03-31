@@ -1,5 +1,4 @@
 import { Pill } from "@/components/ui/pill";
-import { SurfaceCard } from "@/components/ui/surface-card";
 
 type MapCanvasShellProps = {
   hasActiveWalk: boolean;
@@ -11,8 +10,8 @@ export function MapCanvasShell({
   hasToken,
 }: MapCanvasShellProps) {
   return (
-    <SurfaceCard className="overflow-hidden p-0">
-      <div className="relative min-h-[340px] bg-[linear-gradient(180deg,rgba(212,229,245,0.82)_0%,rgba(183,209,231,0.9)_100%)]">
+    <div className="h-full overflow-hidden">
+      <div className="relative h-full bg-[linear-gradient(180deg,rgba(212,229,245,0.82)_0%,rgba(183,209,231,0.9)_100%)]">
         <div className="absolute inset-0 opacity-80">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_18%,rgba(255,255,255,0.72),transparent_22%),radial-gradient(circle_at_80%_26%,rgba(121,196,235,0.4),transparent_18%),radial-gradient(circle_at_56%_74%,rgba(255,255,255,0.42),transparent_18%),linear-gradient(135deg,rgba(255,255,255,0.16)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.16)_50%,rgba(255,255,255,0.16)_75%,transparent_75%,transparent)] bg-[length:120px_120px]" />
         </div>
@@ -44,6 +43,6 @@ export function MapCanvasShell({
           </div>
         </div>
       </div>
-    </SurfaceCard>
+    </div>
   );
 }
