@@ -114,10 +114,6 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
               Sign in
             </Link>
           </p>
-          <p className="mt-3 text-xs leading-5 text-[var(--text-soft)]">
-            If email confirmation is enabled in Supabase, you will need to
-            confirm your address before the dashboard becomes available.
-          </p>
     </AuthShell>
   );
 }

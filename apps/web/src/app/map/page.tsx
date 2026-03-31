@@ -221,21 +221,13 @@ export default async function MapPage({ searchParams }: MapPageProps) {
             </div>
 
             <div className="mt-5 sm:hidden">
-              <div className="grid gap-3">
-                <ButtonLink
-                  href="/dashboard#walk-setup"
-                  variant="primary"
-                  className="w-full px-4 py-3 text-center"
-                >
-                  {activeWalk ? "Open live walk" : "Start walk"}
-                </ButtonLink>
-                <ButtonLink
-                  href={params.mockWalker === "1" ? "/map" : "/map?mockWalker=1"}
-                  className="w-full px-4 py-3 text-center"
-                >
-                  {params.mockWalker === "1" ? "Hide test walker" : "Show test walker"}
-                </ButtonLink>
-              </div>
+              <ButtonLink
+                href="/dashboard#walk-setup"
+                variant="primary"
+                className="w-full px-4 py-3 text-center"
+              >
+                {activeWalk ? "Open live walk" : "Start walk"}
+              </ButtonLink>
             </div>
 
             <div className="mt-5 hidden sm:flex sm:flex-wrap sm:gap-3">
@@ -251,12 +243,6 @@ export default async function MapPage({ searchParams }: MapPageProps) {
               </ButtonLink>
               <ButtonLink href="/profile" className="px-4 py-3 text-center">
                 Profile
-              </ButtonLink>
-              <ButtonLink
-                href={params.mockWalker === "1" ? "/map" : "/map?mockWalker=1"}
-                className="px-4 py-3 text-center"
-              >
-                {params.mockWalker === "1" ? "Hide test walker" : "Show test walker"}
               </ButtonLink>
             </div>
           </div>
@@ -348,35 +334,6 @@ export default async function MapPage({ searchParams }: MapPageProps) {
             </div>
           </SurfaceCard>
 
-          <SurfaceCard className="p-5 sm:p-6">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold text-[var(--text-strong)]">
-                  Next map step
-                </p>
-                <p className="mt-2 text-sm leading-6 text-[var(--text-body)]">
-                  The next backend layer will unlock nearby users under privacy-safe
-                  rules instead of showing only your own live context.
-                </p>
-              </div>
-              <Pill>Phase 1</Pill>
-            </div>
-
-            <div className="mt-5 grid gap-3">
-              {[
-                "Add visibility-safe read policies for public and follower walks.",
-                "Send live location pings while a walk session is active.",
-                "Render nearby walkers and meetup-ready markers on the map.",
-              ].map((item) => (
-                <div
-                  key={item}
-                  className="rounded-[20px] border border-white/70 bg-white/58 px-4 py-3 text-sm leading-6 text-[var(--text-body)]"
-                >
-                  {item}
-                </div>
-              ))}
-            </div>
-          </SurfaceCard>
         </div>
 
         <SurfaceCard className="p-5 sm:p-6">
@@ -420,24 +377,6 @@ export default async function MapPage({ searchParams }: MapPageProps) {
                     </div>
                   </div>
 
-                  {walk.isMock ? (
-                    <div className="mt-4 flex flex-wrap items-center gap-3">
-                      <ButtonLink
-                        href={
-                          walk.isFollowed
-                            ? "/map?mockWalker=1"
-                            : "/map?mockWalker=1&mockFollow=1"
-                        }
-                        variant={walk.isFollowed ? "secondary" : "primary"}
-                        className="px-4 py-2.5"
-                      >
-                        {walk.isFollowed ? "Following" : "Follow"}
-                      </ButtonLink>
-                      <p className="text-xs text-[var(--text-soft)]">
-                        Dev test only
-                      </p>
-                    </div>
-                  ) : null}
                   {!walk.isYou && !walk.isMock ? (
                     <div className="mt-4">
                       <form action={walk.isFollowed ? unfollowWalker : followWalker}>
@@ -452,17 +391,7 @@ export default async function MapPage({ searchParams }: MapPageProps) {
                       </form>
                     </div>
                   ) : null}
-                  {walk.isMock ? (
-                    <div className="mt-4 rounded-[18px] border border-dashed border-[rgba(123,167,209,0.28)] bg-white/42 px-4 py-3">
-                      <p className="text-sm text-[var(--text-body)]">
-                        Dev-only test walker. Useful for solo map testing, but it
-                        uses a local follow toggle instead of a real Supabase follow
-                        relationship.
-                      </p>
-                    </div>
-                  ) : null}
-
-                  <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     <div>
                       <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--text-soft)]">
                         Started
@@ -485,16 +414,6 @@ export default async function MapPage({ searchParams }: MapPageProps) {
                         })}
                       </p>
                     </div>
-                    <div>
-                      <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--text-soft)]">
-                        Coordinates
-                      </p>
-                      <p className="mt-1.5 text-sm text-[var(--text-strong)]">
-                        {walk.last_latitude && walk.last_longitude
-                          ? `${walk.last_latitude.toFixed(3)}, ${walk.last_longitude.toFixed(3)}`
-                          : "Waiting for sync"}
-                      </p>
-                    </div>
                   </div>
                 </div>
               ))}
@@ -502,8 +421,8 @@ export default async function MapPage({ searchParams }: MapPageProps) {
           ) : (
             <div className="mt-5 rounded-[24px] border border-dashed border-[rgba(123,167,209,0.32)] bg-white/38 p-4">
               <p className="text-sm text-[var(--text-body)]">
-                No visible walkers yet. Once the new policy is applied in Supabase
-                and people are live, this list will start filling in.
+                No visible walkers nearby. Once walkers go live and you follow them,
+                they will appear here.
               </p>
             </div>
           )}

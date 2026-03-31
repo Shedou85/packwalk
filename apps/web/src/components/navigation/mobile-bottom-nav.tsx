@@ -8,7 +8,7 @@ import { cn } from "@/lib/cn";
 type MobileBottomNavItem = {
   href: string;
   label: string;
-  icon: "home" | "map" | "walk" | "groups" | "profile" | "notifications";
+  icon: "map" | "walk" | "groups" | "profile" | "notifications";
   badge?: number;
 };
 
@@ -16,7 +16,7 @@ type MobileBottomNavProps = {
   items: MobileBottomNavItem[];
 };
 
-const iconClasses = "h-[18px] w-[18px]";
+const iconClasses = "h-[22px] w-[22px]";
 
 export function MobileBottomNav({ items }: MobileBottomNavProps) {
   const pathname = usePathname();
@@ -33,9 +33,7 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
         >
           {items.map((item) => {
             const active =
-              item.href === "/"
-                ? pathname === "/"
-                : pathname === item.href || pathname.startsWith(`${item.href}/`);
+              pathname === item.href || pathname.startsWith(`${item.href}/`);
 
             return (
               <li key={item.href}>
@@ -78,27 +76,6 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
 }
 
 function NavIcon({ icon }: { icon: MobileBottomNavItem["icon"] }) {
-  if (icon === "home") {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" className={iconClasses} aria-hidden="true">
-        <path
-          d="M4 10.5L12 4L20 10.5V19C20 19.55 19.55 20 19 20H5C4.45 20 4 19.55 4 19V10.5Z"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M9 20V13H15V20"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    );
-  }
-
   if (icon === "profile") {
     return (
       <svg viewBox="0 0 24 24" fill="none" className={iconClasses} aria-hidden="true">

@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 
-import { signOut } from "@/app/auth/actions";
 import {
   createDogProfile,
   endWalkSession,
@@ -82,9 +81,7 @@ export default async function DashboardPage({
               Ready to head out, {welcomeName}.
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--text-body)]">
-              Keep the most important outdoor actions close: go live, manage your
-              dogs, and jump back into profile settings without digging through
-              setup-heavy screens.
+              Go live, manage your dogs, and adjust your settings from one place.
             </p>
 
             <div className="mt-4 flex flex-wrap gap-2">
@@ -114,12 +111,6 @@ export default async function DashboardPage({
               <ButtonLink href="/profile" className="w-full px-4 py-3 text-center sm:w-auto">
                 Profile
               </ButtonLink>
-              <ButtonLink href="/" className="w-full px-4 py-3 text-center sm:w-auto">
-                Home
-              </ButtonLink>
-              <form action={signOut} className="contents sm:block">
-                <Button className="w-full px-4 py-3 sm:w-auto">Sign out</Button>
-              </form>
             </div>
           </div>
 
@@ -145,10 +136,6 @@ export default async function DashboardPage({
                 <p className="text-sm font-semibold text-[var(--text-strong)]">
                   Status
                 </p>
-                <p className="mt-2 text-sm leading-6 text-[var(--text-body)]">
-                  Your latest account and walking updates live here instead of
-                  taking over the main dashboard layout.
-                </p>
               </div>
               <ButtonLink href="/profile" className="px-4 py-2">
                 Profile
@@ -169,7 +156,7 @@ export default async function DashboardPage({
           <DashboardActionTile
             eyebrow="Map"
             title="Open live map"
-            description="Check your map surface, live presence state, and the next layer of nearby discovery."
+            description="See nearby walkers and check your live presence on the map."
             action={
               <ButtonLink href="/map" className="w-full px-4 py-3 text-center">
                 Open map
@@ -201,8 +188,8 @@ export default async function DashboardPage({
             title={dogsCount ? "Your dogs are ready" : "Add your first dog"}
             description={
               dogsCount
-                ? "Keep profiles fresh before we move into map and meetup features."
-                : "Create a dog profile so your PackWalk presence feels personal right away."
+                ? "View and manage your dogs."
+                : "Create a dog profile to personalize your PackWalk presence."
             }
             action={
               <ButtonLink href="#dog-form" className="w-full px-4 py-3 text-center">
@@ -214,7 +201,7 @@ export default async function DashboardPage({
           <DashboardActionTile
             eyebrow="Profile"
             title="Privacy and defaults"
-            description="Review account details, visibility defaults, and location mode without cluttering the main dashboard."
+            description="Update your account details, visibility, and location defaults."
             action={
               <ButtonLink href="/profile" className="w-full px-4 py-3 text-center">
                 Open profile
@@ -376,8 +363,7 @@ export default async function DashboardPage({
                   Your dogs
                 </p>
                 <p className="mt-2 text-sm leading-6 text-[var(--text-body)]">
-                  Keep your dog profiles ready before building live walk and
-                  meetup features.
+                  View and update your dogs.
                 </p>
               </div>
               <div className="rounded-full border border-[rgba(123,167,209,0.28)] bg-white/64 px-3 py-1 text-xs font-medium text-[var(--text-strong)]">

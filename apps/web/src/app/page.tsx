@@ -1,7 +1,8 @@
+import { redirect } from "next/navigation";
+
 import { ButtonLink } from "@/components/ui/button";
 import { FeatureCard } from "@/components/ui/feature-card";
 import { InfoBlock } from "@/components/ui/info-block";
-import { AppNav } from "@/components/navigation/app-nav";
 import { Pill } from "@/components/ui/pill";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { createClient } from "@/lib/supabase/server";
@@ -21,21 +22,15 @@ const features = [
   },
 ];
 
-const stack = [
-  "Next.js",
-  "TypeScript",
-  "Tailwind",
-  "TanStack Query",
-  "Zustand",
-  "Supabase",
-  "Mapbox",
-];
-
 export default async function Home() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  if (user) {
+    redirect("/dashboard");
+  }
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 py-4 pb-28 sm:px-6 sm:py-6 sm:pb-6">
@@ -51,9 +46,6 @@ export default async function Home() {
             Realtime dog-walking meetups.
           </h1>
         </div>
-        <Pill className="px-3 py-1.5 text-[11px] sm:px-4 sm:py-2 sm:text-sm">
-          MVP setup
-        </Pill>
       </SurfaceCard>
 
       <section className="flex flex-1 flex-col gap-4 py-4 sm:gap-6 sm:py-6">
@@ -75,27 +67,24 @@ export default async function Home() {
 
           <div className="mt-6 sm:hidden">
             <ButtonLink
-              href={user ? "/dashboard" : "/sign-up"}
+              href="/sign-up"
               variant="primary"
               className="w-full px-5 py-3 text-center"
             >
-              {user ? "Open dashboard" : "Create account"}
+              Create account
             </ButtonLink>
           </div>
 
           <div className="mt-6 hidden sm:flex sm:flex-wrap sm:gap-3">
             <ButtonLink
-              href={user ? "/dashboard" : "/sign-up"}
+              href="/sign-up"
               variant="primary"
               className="px-5 py-3 text-center"
             >
-              {user ? "Open dashboard" : "Create account"}
+              Create account
             </ButtonLink>
-            <ButtonLink
-              href={user ? "/dashboard" : "/sign-in"}
-              className="px-5 py-3 text-center"
-            >
-              {user ? "View session" : "Sign in"}
+            <ButtonLink href="/sign-in" className="px-5 py-3 text-center">
+              Sign in
             </ButtonLink>
           </div>
         </SurfaceCard>
@@ -106,68 +95,32 @@ export default async function Home() {
           ))}
         </div>
 
-        <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
-          <InfoBlock title="Why this feels mobile-first">
-            <ul className="space-y-3 text-sm text-[var(--text-body)]">
-              <li>Realtime walk sessions with quick privacy controls</li>
-              <li>Map discovery designed for people already outside</li>
-              <li>Groups and chat built around on-the-go coordination</li>
-              <li>Primary actions stay reachable without complex menus</li>
-            </ul>
-          </InfoBlock>
-
-          <InfoBlock title="Current stack">
-            <div className="flex flex-wrap gap-2">
-              {stack.map((item) => (
-                <Pill key={item}>{item}</Pill>
-              ))}
-            </div>
-          </InfoBlock>
-
-          <InfoBlock title="Backend connection">
-            <p className="text-sm leading-6 text-[var(--text-body)]">
-              Supabase environment variables are configured and SSR helpers are
-              ready for auth, profiles, and walk session queries.
-            </p>
-            <div className="mt-4 rounded-2xl border border-[rgba(123,167,209,0.28)] bg-white/64 px-4 py-3 text-sm text-[var(--text-strong)]">
-              {user
-                ? `Signed in as ${user.email ?? "an authenticated user"}`
-                : "No active session yet. Auth wiring is ready."}
-            </div>
-          </InfoBlock>
-
-          <div className="rounded-[28px] border border-dashed border-[rgba(123,167,209,0.4)] bg-white/34 p-5 sm:p-6">
-            <p className="text-sm font-semibold text-[var(--text-strong)]">
-              Next up
-            </p>
-            <p className="mt-2 text-sm leading-6 text-[var(--text-body)]">
-              Build the first live map and `Go for a walk` flow around the same
-              mobile-first logic.
-            </p>
-          </div>
-        </div>
+        <InfoBlock title="Why this feels mobile-first">
+          <ul className="space-y-3 text-sm text-[var(--text-body)]">
+            <li>Realtime walk sessions with quick privacy controls</li>
+            <li>Map discovery designed for people already outside</li>
+            <li>Groups and chat built around on-the-go coordination</li>
+            <li>Primary actions stay reachable without complex menus</li>
+          </ul>
+        </InfoBlock>
       </section>
 
-      {user ? (
-        <AppNav />
-      ) : (
-        <div className="sticky bottom-4 mt-auto pt-2 sm:hidden">
-          <SurfaceCard strong className="p-3">
-            <div className="grid grid-cols-2 gap-3">
-              <ButtonLink
-                href="/sign-up"
-                variant="primary"
-                className="w-full px-4 py-3 text-center"
-              >
-                Join now
-              </ButtonLink>
-              <ButtonLink href="/sign-in" className="w-full px-4 py-3 text-center">
-                Sign in
-              </ButtonLink>
-            </div>
-          </SurfaceCard>
-        </div>
-      )}
+      <div className="sticky bottom-4 mt-auto pt-2 sm:hidden">
+        <SurfaceCard strong className="p-3">
+          <div className="grid grid-cols-2 gap-3">
+            <ButtonLink
+              href="/sign-up"
+              variant="primary"
+              className="w-full px-4 py-3 text-center"
+            >
+              Join now
+            </ButtonLink>
+            <ButtonLink href="/sign-in" className="w-full px-4 py-3 text-center">
+              Sign in
+            </ButtonLink>
+          </div>
+        </SurfaceCard>
+      </div>
     </main>
   );
 }
