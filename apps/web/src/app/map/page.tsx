@@ -5,7 +5,7 @@ import { LiveLocationSync } from "@/components/map/live-location-sync";
 import { MapCanvasShell } from "@/components/map/map-canvas-shell";
 import { MapLiveView } from "@/components/map/map-live-view";
 import { AppNav } from "@/components/navigation/app-nav";
-import { Button, ButtonLink } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
 import { Pill } from "@/components/ui/pill";
 import { SurfaceCard } from "@/components/ui/surface-card";
@@ -44,7 +44,7 @@ export default async function MapPage({ searchParams }: MapPageProps) {
 
   await ensureProfile(user);
 
-  const [{ data: profile }, { data: activeWalk }, { count: dogsCount }, { data: visibleWalks }] =
+  const [{ data: profile }, { data: activeWalk }, { data: visibleWalks }] =
     await Promise.all([
       supabase
         .from("profiles")
@@ -57,10 +57,6 @@ export default async function MapPage({ searchParams }: MapPageProps) {
         .eq("user_id", user.id)
         .eq("status", "active")
         .maybeSingle(),
-      supabase
-        .from("dogs")
-        .select("*", { count: "exact", head: true })
-        .eq("owner_id", user.id),
       supabase
         .from("walk_sessions")
         .select(
@@ -169,235 +165,90 @@ export default async function MapPage({ searchParams }: MapPageProps) {
       ]
     : walkersWithCoordinates;
 
-  const walkerName = profile?.display_name ?? user.email ?? "walker";
   const mapToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
   const hasToken = Boolean(mapToken);
-  const mapFacts = [
-    {
-      label: "Presence",
-      value: activeWalk ? "Live now" : "Offline",
-    },
-    {
-      label: "City",
-      value: profile?.city ?? "City not set",
-    },
-    {
-      label: "Visibility",
-      value: activeWalk?.visibility ?? profile?.default_visibility ?? "followers",
-    },
-    {
-      label: "Precision",
-      value:
-        activeWalk?.location_precision ??
-        profile?.default_location_precision ??
-        "approximate",
-    },
-  ];
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 py-4 pb-28 sm:px-6 sm:py-6 sm:pb-6">
-      <SurfaceCard
-        strong
-        className="overflow-hidden rounded-[28px] px-4 py-5 sm:px-6 sm:py-6"
-      >
-        <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--accent-strong)]">
-              PackWalk map
-            </p>
-            <h1 className="mt-3 text-2xl font-semibold text-[var(--text-strong)] sm:text-3xl">
-              Scan the area around you, {walkerName}.
-            </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--text-body)]">
-              This screen is built for fast outdoor checking: where you are,
-              whether your walk is live, and when nearby discovery is ready to
-              plug in.
-            </p>
-
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Pill>{activeWalk ? "Live walk active" : "Not live yet"}</Pill>
-              <Pill>{dogsCount ?? 0} dogs ready</Pill>
-              <Pill>{hasToken ? "Mapbox ready" : "Map shell only"}</Pill>
-            </div>
-
-            <div className="mt-5 sm:hidden">
-              <div className="grid gap-3">
-                <ButtonLink
-                  href="/dashboard#walk-setup"
-                  variant="primary"
-                  className="w-full px-4 py-3 text-center"
-                >
-                  {activeWalk ? "Open live walk" : "Start walk"}
-                </ButtonLink>
-                <ButtonLink
-                  href={params.mockWalker === "1" ? "/map" : "/map?mockWalker=1"}
-                  className="w-full px-4 py-3 text-center"
-                >
-                  {params.mockWalker === "1" ? "Hide test walker" : "Show test walker"}
-                </ButtonLink>
-              </div>
-            </div>
-
-            <div className="mt-5 hidden sm:flex sm:flex-wrap sm:gap-3">
-              <ButtonLink
-                href="/dashboard#walk-setup"
-                variant="primary"
-                className="px-4 py-3 text-center"
-              >
-                {activeWalk ? "Open live walk" : "Start walk"}
-              </ButtonLink>
-              <ButtonLink href="/dashboard" className="px-4 py-3 text-center">
-                Dashboard
-              </ButtonLink>
-              <ButtonLink href="/profile" className="px-4 py-3 text-center">
-                Profile
-              </ButtonLink>
-              <ButtonLink
-                href={params.mockWalker === "1" ? "/map" : "/map?mockWalker=1"}
-                className="px-4 py-3 text-center"
-              >
-                {params.mockWalker === "1" ? "Hide test walker" : "Show test walker"}
-              </ButtonLink>
-            </div>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-2">
-            {mapFacts.map((item) => (
-              <div
-                key={item.label}
-                className="rounded-[22px] border border-white/70 bg-white/60 px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.36)]"
-              >
-                <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--text-soft)]">
-                  {item.label}
-                </p>
-                <p className="mt-1.5 text-sm font-semibold capitalize text-[var(--text-strong)]">
-                  {item.value}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </SurfaceCard>
-
-      <section className="mt-4 flex flex-1 flex-col gap-4 sm:mt-6 sm:gap-6">
+    <main className="flex min-h-screen flex-col">
+      {/* Full-height map — fills viewport minus bottom nav on mobile */}
+      <div className="relative h-[calc(100dvh-96px)] min-h-[400px] sm:h-screen">
         {(params.followMessage || params.followError) && (
-          <SurfaceCard className="p-5 sm:p-6">
-            {params.followMessage ? <Notice>{params.followMessage}</Notice> : null}
-            {params.followError ? (
-              <Notice variant="error">{params.followError}</Notice>
-            ) : null}
-          </SurfaceCard>
+          <div className="absolute left-4 right-4 top-4 z-10 sm:left-auto sm:right-4 sm:w-72">
+            <div className="glass-panel rounded-[20px] p-4">
+              {params.followMessage ? <Notice>{params.followMessage}</Notice> : null}
+              {params.followError ? (
+                <Notice variant="error">{params.followError}</Notice>
+              ) : null}
+            </div>
+          </div>
         )}
 
         {hasToken ? (
-          <SurfaceCard className="overflow-hidden p-0">
-            <MapLiveView token={mapToken} walkers={mapWalkers} />
-          </SurfaceCard>
+          <MapLiveView token={mapToken} walkers={mapWalkers} />
         ) : (
           <MapCanvasShell hasActiveWalk={Boolean(activeWalk)} hasToken={hasToken} />
         )}
+      </div>
 
-        <div className="grid gap-4 sm:gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-          <SurfaceCard className="p-5 sm:p-6">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold text-[var(--text-strong)]">
-                  Your live presence
-                </p>
-                <p className="mt-2 text-sm leading-6 text-[var(--text-body)]">
-                  This is the state that will anchor your position on the map as
-                  realtime sharing expands.
-                </p>
-              </div>
-              <Pill>{activeWalk ? "Online" : "Waiting"}</Pill>
-            </div>
+      {/* Below-fold: presence + walkers */}
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 py-4 pb-28 sm:gap-6 sm:px-6 sm:py-6 sm:pb-6">
+        <SurfaceCard className="p-5 sm:p-6">
+          <div className="flex items-start justify-between gap-4">
+            <p className="text-sm font-semibold text-[var(--text-strong)]">
+              Your live presence
+            </p>
+            <Pill>{activeWalk ? "Online" : "Waiting"}</Pill>
+          </div>
 
-            {activeWalk ? (
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-[24px] border border-white/70 bg-white/65 p-4">
-                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-[var(--text-soft)]">
-                    Walk
-                  </p>
-                  <p className="mt-2 text-sm font-semibold text-[var(--text-strong)]">
-                    {activeWalk.title || "Active walk"}
-                  </p>
-                </div>
-                <div className="rounded-[24px] border border-white/70 bg-white/65 p-4">
-                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-[var(--text-soft)]">
-                    Ends
-                  </p>
-                  <p className="mt-2 text-sm font-semibold text-[var(--text-strong)]">
-                    {new Date(activeWalk.expires_at).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="mt-5 rounded-[24px] border border-dashed border-[rgba(123,167,209,0.32)] bg-white/38 p-4">
-                <p className="text-sm text-[var(--text-body)]">
-                  You are not sharing a live walk yet. Start one from the dashboard
-                  to place yourself on the map and prepare for nearby discovery.
+          {activeWalk ? (
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-[24px] border border-white/70 bg-white/65 p-4">
+                <p className="text-xs font-medium uppercase tracking-[0.2em] text-[var(--text-soft)]">
+                  Walk
+                </p>
+                <p className="mt-2 text-sm font-semibold text-[var(--text-strong)]">
+                  {activeWalk.title || "Active walk"}
                 </p>
               </div>
-            )}
-
-            <div className="mt-4">
-              <LiveLocationSync walkId={activeWalk?.id ?? null} userId={user.id} />
-            </div>
-          </SurfaceCard>
-
-          <SurfaceCard className="p-5 sm:p-6">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold text-[var(--text-strong)]">
-                  Next map step
+              <div className="rounded-[24px] border border-white/70 bg-white/65 p-4">
+                <p className="text-xs font-medium uppercase tracking-[0.2em] text-[var(--text-soft)]">
+                  Ends
                 </p>
-                <p className="mt-2 text-sm leading-6 text-[var(--text-body)]">
-                  The next backend layer will unlock nearby users under privacy-safe
-                  rules instead of showing only your own live context.
+                <p className="mt-2 text-sm font-semibold text-[var(--text-strong)]">
+                  {new Date(activeWalk.expires_at).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </p>
               </div>
-              <Pill>Phase 1</Pill>
             </div>
+          ) : (
+            <div className="mt-4 rounded-[24px] border border-dashed border-[rgba(123,167,209,0.32)] bg-white/38 p-4">
+              <p className="text-sm text-[var(--text-body)]">
+                You are not sharing a live walk yet. Start one from the dashboard
+                to place yourself on the map.
+              </p>
+            </div>
+          )}
 
-            <div className="mt-5 grid gap-3">
-              {[
-                "Add visibility-safe read policies for public and follower walks.",
-                "Send live location pings while a walk session is active.",
-                "Render nearby walkers and meetup-ready markers on the map.",
-              ].map((item) => (
-                <div
-                  key={item}
-                  className="rounded-[20px] border border-white/70 bg-white/58 px-4 py-3 text-sm leading-6 text-[var(--text-body)]"
-                >
-                  {item}
-                </div>
-              ))}
-            </div>
-          </SurfaceCard>
-        </div>
+          <div className="mt-4">
+            <LiveLocationSync walkId={activeWalk?.id ?? null} userId={user.id} />
+          </div>
+        </SurfaceCard>
 
         <SurfaceCard className="p-5 sm:p-6">
           <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold text-[var(--text-strong)]">
-                Visible walkers
-              </p>
-              <p className="mt-2 text-sm leading-6 text-[var(--text-body)]">
-                This feed reflects what your current policies allow you to see right now.
-              </p>
-            </div>
+            <p className="text-sm font-semibold text-[var(--text-strong)]">
+              Visible walkers
+            </p>
             <Pill>{walkFeed.length} live</Pill>
           </div>
 
           {walkFeed.length ? (
-            <div className="mt-5 grid gap-3">
+            <div className="mt-4 grid gap-3">
               {walkFeed.map((walk) => (
                 <div
                   key={walk.id}
-                  id={`walker-${walk.id}`}
                   className="rounded-[24px] border border-white/70 bg-white/65 p-4"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -409,35 +260,17 @@ export default async function MapPage({ searchParams }: MapPageProps) {
                           "Walker"}
                         {walk.isYou ? " · You" : ""}
                       </p>
-                      <p className="mt-1 text-xs text-[var(--text-soft)]">
-                        {walk.profile?.city ?? "City not set"}
+                      <p className="mt-1 text-xs capitalize text-[var(--text-soft)]">
+                        {walk.visibility} ·{" "}
+                        {new Date(walk.started_at).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </p>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Pill>{walk.visibility}</Pill>
-                      <Pill>{walk.location_precision}</Pill>
-                      {walk.isMock ? <Pill>test</Pill> : null}
-                    </div>
+                    <Pill>{walk.visibility}</Pill>
                   </div>
 
-                  {walk.isMock ? (
-                    <div className="mt-4 flex flex-wrap items-center gap-3">
-                      <ButtonLink
-                        href={
-                          walk.isFollowed
-                            ? "/map?mockWalker=1"
-                            : "/map?mockWalker=1&mockFollow=1"
-                        }
-                        variant={walk.isFollowed ? "secondary" : "primary"}
-                        className="px-4 py-2.5"
-                      >
-                        {walk.isFollowed ? "Following" : "Follow"}
-                      </ButtonLink>
-                      <p className="text-xs text-[var(--text-soft)]">
-                        Dev test only
-                      </p>
-                    </div>
-                  ) : null}
                   {!walk.isYou && !walk.isMock ? (
                     <div className="mt-4">
                       <form action={walk.isFollowed ? unfollowWalker : followWalker}>
@@ -452,63 +285,19 @@ export default async function MapPage({ searchParams }: MapPageProps) {
                       </form>
                     </div>
                   ) : null}
-                  {walk.isMock ? (
-                    <div className="mt-4 rounded-[18px] border border-dashed border-[rgba(123,167,209,0.28)] bg-white/42 px-4 py-3">
-                      <p className="text-sm text-[var(--text-body)]">
-                        Dev-only test walker. Useful for solo map testing, but it
-                        uses a local follow toggle instead of a real Supabase follow
-                        relationship.
-                      </p>
-                    </div>
-                  ) : null}
-
-                  <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                    <div>
-                      <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--text-soft)]">
-                        Started
-                      </p>
-                      <p className="mt-1.5 text-sm text-[var(--text-strong)]">
-                        {new Date(walk.started_at).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--text-soft)]">
-                        Ends
-                      </p>
-                      <p className="mt-1.5 text-sm text-[var(--text-strong)]">
-                        {new Date(walk.expires_at).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--text-soft)]">
-                        Coordinates
-                      </p>
-                      <p className="mt-1.5 text-sm text-[var(--text-strong)]">
-                        {walk.last_latitude && walk.last_longitude
-                          ? `${walk.last_latitude.toFixed(3)}, ${walk.last_longitude.toFixed(3)}`
-                          : "Waiting for sync"}
-                      </p>
-                    </div>
-                  </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="mt-5 rounded-[24px] border border-dashed border-[rgba(123,167,209,0.32)] bg-white/38 p-4">
+            <div className="mt-4 rounded-[24px] border border-dashed border-[rgba(123,167,209,0.32)] bg-white/38 p-4">
               <p className="text-sm text-[var(--text-body)]">
-                No visible walkers yet. Once the new policy is applied in Supabase
-                and people are live, this list will start filling in.
+                No visible walkers yet. Once people are live and sharing, markers
+                will appear on the map above.
               </p>
             </div>
           )}
         </SurfaceCard>
-      </section>
+      </div>
 
       <AppNav />
     </main>
