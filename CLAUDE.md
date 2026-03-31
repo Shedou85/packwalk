@@ -36,6 +36,15 @@ These are root-level shortcuts. The web app itself uses standard `next dev`, `ne
 - **Zod 4** for validation (used in server actions)
 - **Zustand 5** for client state (installed, not yet in use)
 
+## Vercel Deployment
+
+- **Root Directory** is set to `apps/web` in the Vercel dashboard project settings — do not change this
+- **Do NOT create `vercel.json`** — Vercel auto-detects Next.js; a vercel.json overrides and breaks auto-detection
+- **Do NOT create `.npmrc`** with `platform`/`arch` settings — npm ignores them and they cause confusion
+- **Native binary deps**: `lightningcss` and `@tailwindcss/oxide` install platform-specific binaries automatically. For Vercel (Linux), add their `linux-x64-gnu` variants to `optionalDependencies` in `apps/web/package.json` — do NOT also add them as regular deps
+- **Build command** is `next build` — no `--no-turbopack` flag; Turbopack is the default in Next.js 16
+- **Always run `next build` locally** before pushing to catch TypeScript errors early
+
 ## Next.js 16 Warning
 
 This project uses Next.js 16 which has breaking API changes. **Read `node_modules/next/dist/docs/` before writing any code** that touches Next.js APIs or conventions. See `apps/web/AGENTS.md`.
@@ -43,7 +52,7 @@ This project uses Next.js 16 which has breaking API changes. **Read `node_module
 ## Architecture
 
 ### Auth Flow
-Supabase Auth with SSR. Server-side client created via `lib/supabase/server.ts`, browser client via `lib/supabase/browser.ts`. On signup, `lib/supabase/profiles.ts:ensureProfile` auto-creates a `profiles` row with a generated username. No middleware file exists yet.
+Supabase Auth with SSR. Server-side client created via `lib/supabase/server.ts`, browser client via `lib/supabase/browser.ts`. On signup, `lib/supabase/profiles.ts:ensureProfile` auto-creates a `profiles` row with a generated username. The middleware file is `src/proxy.ts` (Next.js 16 renamed the convention from `middleware.ts` to `proxy.ts`).
 
 ### Server Actions
 Form handlers in colocated `actions.ts` files using Zod validation:
