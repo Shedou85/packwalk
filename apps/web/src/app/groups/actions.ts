@@ -143,6 +143,44 @@ export async function joinGroup(formData: FormData) {
   redirect(`/groups/${groupId}?message=Joined group.`);
 }
 
+export async function sendGroupMessage(
+  _prev: { error?: string; success?: boolean } | null,
+  formData: FormData,
+): Promise<{ error?: string; success?: boolean }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Please sign in first." };
+  }
+
+  const groupId = getText(formData.get("groupId"));
+  const body = getText(formData.get("body")).trim();
+
+  if (!groupId || !body) {
+    return { error: "Missing required fields." };
+  }
+
+  if (body.length > 2000) {
+    return { error: "Message too long (max 2000 characters)." };
+  }
+
+  const { error } = await supabase.from("group_messages").insert({
+    group_id: groupId,
+    sender_id: user.id,
+    body,
+    message_type: "text",
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { success: true };
+}
+
 export async function leaveGroup(formData: FormData) {
   const supabase = await createClient();
   const {

@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 
 import { joinGroup, leaveGroup } from "@/app/groups/actions";
 import { AppNav } from "@/components/navigation/app-nav";
+import { GroupChat } from "@/components/groups/group-chat";
+import type { ChatMessage } from "@/components/groups/group-chat";
 import { ProfileConnectionList } from "@/components/profile/profile-connection-list";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
@@ -32,25 +34,41 @@ export default async function GroupDetailPage({
     redirect("/sign-in");
   }
 
-  const [{ data: group }, { data: members }, { data: membership }] =
-    await Promise.all([
-      supabase
-        .from("groups")
-        .select("id, name, description, privacy, owner_id, created_at")
-        .eq("id", groupId)
-        .single(),
-      supabase
-        .from("group_members")
-        .select("user_id, role, joined_at")
-        .eq("group_id", groupId)
-        .eq("status", "active"),
-      supabase
-        .from("group_members")
-        .select("role, status")
-        .eq("group_id", groupId)
-        .eq("user_id", user.id)
-        .maybeSingle(),
-    ]);
+  const [
+    { data: group },
+    { data: members },
+    { data: membership },
+    { data: rawMessages },
+    { data: currentProfile },
+  ] = await Promise.all([
+    supabase
+      .from("groups")
+      .select("id, name, description, privacy, owner_id, created_at")
+      .eq("id", groupId)
+      .single(),
+    supabase
+      .from("group_members")
+      .select("user_id, role, joined_at")
+      .eq("group_id", groupId)
+      .eq("status", "active"),
+    supabase
+      .from("group_members")
+      .select("role, status")
+      .eq("group_id", groupId)
+      .eq("user_id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("group_messages")
+      .select("id, sender_id, body, created_at, profiles(display_name)")
+      .eq("group_id", groupId)
+      .order("created_at", { ascending: true })
+      .limit(50),
+    supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("id", user.id)
+      .single(),
+  ]);
 
   if (!group) {
     redirect("/groups?error=Group not found.");
@@ -84,6 +102,15 @@ export default async function GroupDetailPage({
   const isActiveMember = membership?.status === "active";
   const canJoin = !isActiveMember && group.privacy === "public";
   const canLeave = isActiveMember && !isOwner;
+
+  const initialMessages: ChatMessage[] = (rawMessages ?? []).map((m) => ({
+    id: m.id,
+    sender_id: m.sender_id,
+    body: m.body,
+    created_at: m.created_at,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    sender: (m.profiles as any) ?? null,
+  }));
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 py-4 pb-28 sm:px-6 sm:py-6 sm:pb-6">
@@ -180,6 +207,14 @@ export default async function GroupDetailPage({
           badge={`${memberItems.length}`}
           emptyText="No members yet."
           items={memberItems}
+        />
+
+        <GroupChat
+          groupId={group.id}
+          currentUserId={user.id}
+          currentUserName={currentProfile?.display_name ?? "You"}
+          initialMessages={initialMessages}
+          isMember={isActiveMember}
         />
       </section>
 
