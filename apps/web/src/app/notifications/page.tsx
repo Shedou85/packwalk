@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { AppNav } from "@/components/navigation/app-nav";
@@ -13,6 +14,7 @@ type Notification = {
   read_at: string | null;
   created_at: string;
   actor: { display_name: string | null; username: string } | null;
+  payload: Record<string, unknown>;
 };
 
 const TYPE_ICONS: Record<string, string> = {
@@ -24,6 +26,21 @@ const TYPE_ICONS: Record<string, string> = {
 
 function typeIcon(type: string): string {
   return TYPE_ICONS[type] ?? "🔔";
+}
+
+function getNotificationLink(n: Notification): string | null {
+  switch (n.type) {
+    case "follow":
+      return "/map";
+    case "group_message":
+    case "group_invite":
+    case "group_join": {
+      const groupId = n.payload?.group_id;
+      return typeof groupId === "string" ? `/groups/${groupId}` : null;
+    }
+    default:
+      return null;
+  }
 }
 
 function timeAgo(iso: string): string {
@@ -50,7 +67,7 @@ export default async function NotificationsPage() {
 
   const { data: rawNotifications } = await supabase
     .from("notifications")
-    .select("id, type, title, body, read_at, created_at, actor:profiles!actor_id(display_name, username)")
+    .select("id, type, title, body, read_at, created_at, payload, actor:profiles!actor_id(display_name, username)")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(50);
@@ -58,6 +75,7 @@ export default async function NotificationsPage() {
   const notifications: Notification[] = (rawNotifications ?? []).map((n) => ({
     ...n,
     actor: Array.isArray(n.actor) ? (n.actor[0] ?? null) : n.actor,
+    payload: (n.payload ?? {}) as Record<string, unknown>,
   }));
 
   // Mark all unread as read now that the page is being viewed
@@ -110,11 +128,9 @@ export default async function NotificationsPage() {
             <ul className="divide-y divide-[rgba(123,167,209,0.15)]">
               {notifications.map((n) => {
                 const wasUnread = unreadIds.includes(n.id);
-                return (
-                  <li
-                    key={n.id}
-                    className="flex items-start gap-4 py-4 first:pt-0 last:pb-0"
-                  >
+                const link = getNotificationLink(n);
+                const inner = (
+                  <>
                     {/* Icon bubble */}
                     <span
                       className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[rgba(109,150,189,0.2)] bg-[rgba(255,255,255,0.6)] text-[18px]"
@@ -125,12 +141,12 @@ export default async function NotificationsPage() {
 
                     {/* Content */}
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
                         <p
                           className={
                             wasUnread
-                              ? "text-sm font-semibold text-[var(--text-strong)]"
-                              : "text-sm text-[var(--text-body)]"
+                              ? "flex-1 text-sm font-semibold text-[var(--text-strong)]"
+                              : "flex-1 text-sm text-[var(--text-body)]"
                           }
                         >
                           {n.title}
@@ -148,6 +164,37 @@ export default async function NotificationsPage() {
                         {timeAgo(n.created_at)}
                       </p>
                     </div>
+
+                    {/* Chevron for clickable rows */}
+                    {link && (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        className="h-4 w-4 shrink-0 text-[var(--text-soft)] opacity-50"
+                        aria-hidden="true"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    )}
+                  </>
+                );
+
+                const rowClass = `flex items-center gap-4 py-4 first:pt-0 last:pb-0${link ? " -mx-1 rounded-xl px-1 transition-colors hover:bg-[rgba(109,150,189,0.08)] active:bg-[rgba(109,150,189,0.15)]" : ""}`;
+
+                return (
+                  <li key={n.id}>
+                    {link ? (
+                      <Link href={link} className={rowClass}>
+                        {inner}
+                      </Link>
+                    ) : (
+                      <div className={rowClass}>{inner}</div>
+                    )}
                   </li>
                 );
               })}
