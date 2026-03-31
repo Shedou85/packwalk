@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { joinGroup, leaveGroup } from "@/app/groups/actions";
-import { appNavItems } from "@/components/navigation/app-nav-items";
-import { MobileBottomNav } from "@/components/navigation/mobile-bottom-nav";
+import { AppNav } from "@/components/navigation/app-nav";
 import { ProfileConnectionList } from "@/components/profile/profile-connection-list";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
@@ -184,7 +183,7 @@ export default async function GroupDetailPage({
         />
       </section>
 
-      <MobileBottomNav items={appNavItems} />
+      <AppNav />
     </main>
   );
 }

@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { createGroup, joinGroup } from "@/app/groups/actions";
-import { appNavItems } from "@/components/navigation/app-nav-items";
-import { MobileBottomNav } from "@/components/navigation/mobile-bottom-nav";
+import { AppNav } from "@/components/navigation/app-nav";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { CompactSelect } from "@/components/ui/compact-select";
 import { Field, TextInput } from "@/components/ui/field";
@@ -244,7 +243,7 @@ export default async function GroupsPage({ searchParams }: GroupsPageProps) {
         )}
       </section>
 
-      <MobileBottomNav items={appNavItems} />
+      <AppNav />
     </main>
   );
 }
