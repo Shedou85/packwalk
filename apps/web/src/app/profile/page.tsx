@@ -1,17 +1,22 @@
 import { redirect } from "next/navigation";
 
 import { signOut } from "@/app/auth/actions";
+import { updateProfile } from "@/app/profile/actions";
 import { AppNav } from "@/components/navigation/app-nav";
 import { ProfileConnectionList } from "@/components/profile/profile-connection-list";
 import { ProfileFactGrid } from "@/components/profile/profile-fact-grid";
-import { ProfileShortcutCard } from "@/components/profile/profile-shortcut-card";
 import { Button, ButtonLink } from "@/components/ui/button";
+import { Field, SelectInput, TextInput } from "@/components/ui/field";
 import { Pill } from "@/components/ui/pill";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { ensureProfile } from "@/lib/supabase/profiles";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function ProfilePage() {
+type ProfilePageProps = {
+  searchParams: Promise<{ saved?: string; error?: string }>;
+};
+
+export default async function ProfilePage({ searchParams }: ProfilePageProps) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -68,6 +73,8 @@ export default async function ProfilePage() {
       .limit(8),
   ]);
 
+  const { saved, error: profileError } = await searchParams;
+
   const connectionProfileIds = [
     ...new Set([
       ...(followingRows ?? []).map((row) => row.following_id),
@@ -123,41 +130,6 @@ export default async function ProfilePage() {
       label: "Username",
       value: profile?.username ?? "Not set yet",
     },
-    {
-      label: "Display name",
-      value: profile?.display_name ?? "Not set yet",
-    },
-    {
-      label: "City",
-      value: profile?.city ?? "Not set yet",
-    },
-  ];
-
-  const preferences = [
-    {
-      label: "Default visibility",
-      value: profile?.default_visibility ?? "followers",
-    },
-    {
-      label: "Location precision",
-      value: profile?.default_location_precision ?? "approximate",
-    },
-    {
-      label: "Dogs",
-      value: `${dogsCount ?? 0} saved`,
-    },
-    {
-      label: "Active walks",
-      value: `${activeWalkCount ?? 0} live`,
-    },
-    {
-      label: "Following",
-      value: `${followingCount ?? 0} walkers`,
-    },
-    {
-      label: "Followers",
-      value: `${followersCount ?? 0} walkers`,
-    },
   ];
 
   return (
@@ -179,7 +151,7 @@ export default async function ProfilePage() {
           </div>
         </div>
 
-        <div className="hidden flex-wrap gap-3 sm:flex sm:flex-nowrap">
+        <div className="flex flex-wrap gap-3 sm:flex-nowrap">
           <ButtonLink href="/dashboard" className="px-4 py-2">
             Dashboard
           </ButtonLink>
@@ -189,70 +161,83 @@ export default async function ProfilePage() {
         </div>
       </SurfaceCard>
 
-      <div className="mt-4 flex flex-col gap-3 sm:hidden">
-        <ButtonLink
-          href="/dashboard#walk-setup"
-          variant="primary"
-          className="w-full px-4 py-3 text-center"
-        >
-          {activeWalkCount ? "Open live walk" : "Start walk"}
-        </ButtonLink>
-        <form action={signOut}>
-          <Button className="w-full px-4 py-3">Sign out</Button>
-        </form>
-      </div>
+      {saved ? (
+        <div className="mt-4 rounded-2xl border border-[rgba(77,168,218,0.3)] bg-[rgba(77,168,218,0.08)] px-4 py-3 text-sm text-[var(--accent-strong)]">
+          Profile saved.
+        </div>
+      ) : null}
+
+      {profileError ? (
+        <div className="mt-4 rounded-2xl border border-red-200 bg-red-50/60 px-4 py-3 text-sm text-red-700">
+          {decodeURIComponent(profileError)}
+        </div>
+      ) : null}
 
       <section className="mt-4 flex flex-1 flex-col gap-4 sm:mt-6 sm:gap-6">
-        <SurfaceCard className="overflow-hidden p-5 sm:p-7">
-          <div className="grid gap-5 lg:grid-cols-[1.25fr_0.75fr] lg:items-start">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--accent-strong)]">
-                Profile hub
-              </p>
-              <h2 className="mt-3 text-xl font-semibold text-[var(--text-strong)] sm:text-2xl">
-                Your account, privacy settings, and connections.
-              </h2>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--text-body)]">
-                Manage your identity, visibility defaults, and the people you walk with.
-              </p>
-            </div>
+        <SurfaceCard className="p-5 sm:p-7">
+          <p className="text-sm font-semibold text-[var(--text-strong)]">Edit profile</p>
+          <p className="mt-1 text-sm leading-6 text-[var(--text-body)]">
+            Changes apply to future walk sessions.
+          </p>
 
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-              <div className="rounded-[24px] border border-white/70 bg-white/65 p-4">
-                <p className="text-xs font-medium uppercase tracking-[0.2em] text-[var(--text-soft)]">
-                  Current visibility
-                </p>
-                <p className="mt-2 text-base font-semibold capitalize text-[var(--text-strong)]">
-                  {profile?.default_visibility ?? "followers"}
-                </p>
-              </div>
-              <div className="rounded-[24px] border border-white/70 bg-white/65 p-4">
-                <p className="text-xs font-medium uppercase tracking-[0.2em] text-[var(--text-soft)]">
-                  Location mode
-                </p>
-                <p className="mt-2 text-base font-semibold capitalize text-[var(--text-strong)]">
-                  {profile?.default_location_precision ?? "approximate"}
-                </p>
-              </div>
+          <form action={updateProfile} className="mt-5 grid gap-4 sm:grid-cols-2">
+            <Field label="Display name" htmlFor="display_name">
+              <TextInput
+                id="display_name"
+                name="display_name"
+                defaultValue={profile?.display_name ?? ""}
+                placeholder="Your name"
+                maxLength={80}
+              />
+            </Field>
+
+            <Field label="City" htmlFor="city">
+              <TextInput
+                id="city"
+                name="city"
+                defaultValue={profile?.city ?? ""}
+                placeholder="e.g. Berlin"
+                maxLength={80}
+              />
+            </Field>
+
+            <Field label="Default visibility" htmlFor="default_visibility">
+              <SelectInput
+                id="default_visibility"
+                name="default_visibility"
+                defaultValue={profile?.default_visibility ?? "followers"}
+              >
+                <option value="public">Public</option>
+                <option value="followers">Followers only</option>
+                <option value="private_group">Private group</option>
+              </SelectInput>
+            </Field>
+
+            <Field label="Location precision" htmlFor="default_location_precision">
+              <SelectInput
+                id="default_location_precision"
+                name="default_location_precision"
+                defaultValue={profile?.default_location_precision ?? "approximate"}
+              >
+                <option value="approximate">Approximate</option>
+                <option value="exact">Exact</option>
+              </SelectInput>
+            </Field>
+
+            <div className="sm:col-span-2">
+              <Button type="submit" variant="primary" className="px-6 py-2.5">
+                Save changes
+              </Button>
             </div>
-          </div>
+          </form>
         </SurfaceCard>
 
-        <div className="grid gap-4 sm:gap-6 lg:grid-cols-[1fr_1fr]">
-          <ProfileFactGrid
-            title="Account"
-            description="Your personal details and identity."
-            facts={accountFacts}
-            badge="Ready"
-          />
-
-          <ProfileFactGrid
-            title="Privacy"
-            description="Default settings applied to each new walk session."
-            facts={preferences}
-            badge="Live ready"
-          />
-        </div>
+        <ProfileFactGrid
+          title="Account"
+          description="Your login details."
+          facts={accountFacts}
+          badge="Read only"
+        />
 
         <div className="grid gap-4 sm:gap-6 lg:grid-cols-[1fr_1fr]">
           <ProfileConnectionList
@@ -269,39 +254,6 @@ export default async function ProfilePage() {
             badge={`${followersCount ?? 0}`}
             emptyText="No followers yet. Once someone follows you, they will show up here."
             items={followerItems}
-          />
-        </div>
-
-        <div className="grid gap-4 sm:gap-6 lg:grid-cols-[1fr_1fr]">
-          <ProfileShortcutCard
-            title="Start a walk"
-            description="Jump straight into the live flow with your current defaults and dog setup."
-            badge={activeWalkCount ? "Live now" : "Offline"}
-            tone="accent"
-            action={
-              <ButtonLink
-                href="/dashboard#walk-setup"
-                variant="primary"
-                className="w-full px-4 py-3 text-center"
-              >
-                Open walk setup
-              </ButtonLink>
-            }
-          />
-
-          <ProfileShortcutCard
-            title="Dogs and dashboard"
-            description="Manage your dog profiles or head back to the main PackWalk surface."
-            action={
-              <div className="grid gap-3 sm:grid-cols-2">
-                <ButtonLink href="/dashboard" className="w-full px-4 py-3 text-center">
-                  View dogs
-                </ButtonLink>
-                <ButtonLink href="/map" className="w-full px-4 py-3 text-center">
-                  Open map
-                </ButtonLink>
-              </div>
-            }
           />
         </div>
       </section>
