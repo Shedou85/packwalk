@@ -55,7 +55,10 @@ export default async function NotificationsPage() {
     .order("created_at", { ascending: false })
     .limit(50);
 
-  const notifications = (rawNotifications ?? []) as Notification[];
+  const notifications: Notification[] = (rawNotifications ?? []).map((n) => ({
+    ...n,
+    actor: Array.isArray(n.actor) ? (n.actor[0] ?? null) : n.actor,
+  }));
 
   // Mark all unread as read now that the page is being viewed
   const unreadIds = notifications.filter((n) => !n.read_at).map((n) => n.id);
